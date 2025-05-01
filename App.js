@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 // App.js
 import React from 'react';
 import {SafeAreaView, StatusBar, Platform} from 'react-native';
@@ -10,6 +11,7 @@ import {ThemeProvider} from './src/contexts/ThemeContext';
 import ErrorBoundary from './src/components/ErrorBoundary';
 import {toastConfig} from './src/components/ToastConfig';
 import SplashScreen from './src/screens/SplashScreen';
+import TabNavigator from './src/navigation/TabNavigator';
 import HomeScreen from './src/screens/HomeScreen';
 
 const Stack = createNativeStackNavigator();
@@ -29,6 +31,7 @@ export default function App() {
               <Stack.Navigator screenOptions={{headerShown: false}}>
                 <Stack.Screen name="Splash" component={SplashScreen} />
                 <Stack.Screen name="Home" component={HomeScreen} />
+                <Stack.Screen name="Main" component={TabNavigator} />
               </Stack.Navigator>
             </NavigationContainer>
             <Toast

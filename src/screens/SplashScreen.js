@@ -5,6 +5,7 @@ import {
   Text,
   StyleSheet,
   ActivityIndicator,
+  // eslint-disable-next-line no-unused-vars
   useColorScheme,
   Image,
 } from 'react-native';
@@ -35,7 +36,7 @@ const SplashScreen = () => {
       if (status !== 'granted') {
         await requestNotifications(['alert', 'sound']);
       }
-    })().finally(() => setTimeout(() => navigation.replace('Home'), 1000));
+    })().finally(() => setTimeout(() => navigation.replace('Main'), 1000));
   }, [isConnected, navigation]);
 
   return (
