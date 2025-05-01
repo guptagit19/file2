@@ -1,9 +1,9 @@
+// src/navigation/TabNavigator.js
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react-native/no-inline-styles */
-// src/navigation/TabNavigator.js
 import React, {useContext} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 import {moderateScale} from '../constants/metrics';
@@ -14,7 +14,7 @@ import DatingScreen from '../screens/DatingScreen';
 import CommunityScreen from '../screens/CommunityScreen';
 import LifePartnerScreen from '../screens/LifePartnerScreen';
 
-const Tab = createBottomTabNavigator();
+const Tab = createMaterialTopTabNavigator();
 
 export default function TabNavigator() {
   const {colors, fonts, fontSizes} = useContext(ThemeContext);
@@ -42,12 +42,16 @@ export default function TabNavigator() {
 
   return (
     <Tab.Navigator
+      initialRouteName="Dating"
+      swipeEnabled={true}
+      tabBarPosition="bottom"
       screenOptions={{
         headerShown: false,
         tabBarShowLabel: false,
+        tabBarIndicatorStyle: {height: 0},
         tabBarStyle: {
           backgroundColor: colors.background,
-          height: moderateScale(70),
+          height: moderateScale(105),
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
@@ -87,7 +91,7 @@ export default function TabNavigator() {
                     color={focused ? colors.primary : colors.text}
                   />
                 </View>
-                {/* Forced single‐line label */}
+                {/* Label */}
                 <Text
                   numberOfLines={1}
                   ellipsizeMode="tail"
@@ -110,7 +114,7 @@ export default function TabNavigator() {
 
 const styles = StyleSheet.create({
   tabContainer: {
-    width: moderateScale(80), // ensure enough room for label
+    width: moderateScale(80), // same as before
     alignItems: 'center',
     justifyContent: 'center',
   },
