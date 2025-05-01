@@ -20,6 +20,7 @@ import {ConnectivityContext} from '../contexts/ConnectivityContext';
 import {ThemeContext} from '../contexts/ThemeContext';
 import {Strings} from '../constants/strings';
 import {moderateScale} from '../constants/metrics';
+import {storage} from '../contexts/storagesMMKV';
 
 const SplashScreen = () => {
   const navigation = useNavigation();
@@ -27,16 +28,26 @@ const SplashScreen = () => {
   const {colors} = useContext(ThemeContext);
 
   useEffect(() => {
+    const isRegistered = storage.getBoolean('isRegistered') ?? false;
     if (!isConnected) {
       Toast.show({type: 'info', text1: Strings.noInternet});
       return;
     }
+
     (async () => {
       const {status} = await checkNotifications();
       if (status !== 'granted') {
         await requestNotifications(['alert', 'sound']);
       }
-    })().finally(() => setTimeout(() => navigation.replace('Main'), 1000));
+    })().finally(() => {
+      setTimeout(() => {
+        if (isRegistered) {
+          navigation.replace('Main');
+        } else {
+          navigation.replace('OTPVerificationScreen');
+        }
+      }, 1000);
+    });
   }, [isConnected, navigation]);
 
   return (

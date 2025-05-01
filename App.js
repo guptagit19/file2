@@ -13,6 +13,8 @@ import {toastConfig} from './src/components/ToastConfig';
 import SplashScreen from './src/screens/SplashScreen';
 import TabNavigator from './src/navigation/TabNavigator';
 import HomeScreen from './src/screens/HomeScreen';
+import LoginScreen from './src/screens/LoginScreen';
+import OTPVerificationScreen from './src/screens/OTPVerificationScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -28,9 +30,11 @@ export default function App() {
                 Platform.OS === 'android' ? StatusBar.currentHeight : 0,
             }}>
             <NavigationContainer>
-              <Stack.Navigator screenOptions={{headerShown: false}}>
+              <Stack.Navigator initialRouteName = "Splash" screenOptions={{headerShown: false}}>
                 <Stack.Screen name="Splash" component={SplashScreen} />
                 <Stack.Screen name="Home" component={HomeScreen} />
+                <Stack.Screen name="LoginScreen" component={LoginScreen} />
+                <Stack.Screen name="OTPVerificationScreen" component={OTPVerificationScreen} />
                 <Stack.Screen name="Main" component={TabNavigator} />
               </Stack.Navigator>
             </NavigationContainer>

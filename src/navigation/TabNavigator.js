@@ -51,7 +51,7 @@ export default function TabNavigator() {
         tabBarIndicatorStyle: {height: 0},
         tabBarStyle: {
           backgroundColor: colors.background,
-          height: moderateScale(105),
+          height: moderateScale(103),
           borderTopWidth: 0,
           elevation: 0,
           shadowOpacity: 0,
