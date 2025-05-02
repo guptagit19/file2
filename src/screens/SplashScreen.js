@@ -44,7 +44,7 @@ const SplashScreen = () => {
         if (isRegistered) {
           navigation.replace('Main');
         } else {
-          navigation.replace('OTPVerificationScreen');
+          navigation.replace('RegisterScreen');
         }
       }, 1000);
     });

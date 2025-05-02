@@ -1,3 +1,6 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable curly */
+/* eslint-disable react-native/no-inline-styles */
 // src/screens/LoginScreen.js
 import React, {useState, useContext} from 'react';
 import {
@@ -51,7 +54,7 @@ export default function LoginScreen({navigation}) {
     }
 
     const fullPhoneNumber = `${selected}${phone}`;
-    Alert.alert('fullPhoneNumber',fullPhoneNumber)
+    Alert.alert('fullPhoneNumber', fullPhoneNumber);
     setLoading(true);
     try {
       const response = await APIsGet(endPoints.generateOtp, {
@@ -111,7 +114,7 @@ export default function LoginScreen({navigation}) {
                   // Code button
                   countryCodeTextStyles={[
                     styles.countryCodeText,
-                    {color: colors.text, fontFamily: fonts.medium},
+                    {color: !colors.text, fontFamily: fonts.medium},
                   ]}
                   countryCodeContainerStyles={[
                     styles.countryCodePicker,
@@ -121,17 +124,21 @@ export default function LoginScreen({navigation}) {
                   searchStyles={[
                     styles.search,
                     {
-                      borderColor: colors.text,
-                      backgroundColor: colors.background,
+                      //borderColor: colors.text,
+                      backgroundColor: '#FFFFFF',
                     },
                   ]}
-                  searchInputStyles={{color: colors.text}}
+                  searchInputStyles={{
+                    color: !colors.text,
+                    fontFamily: fonts.bold,
+                    fontSize: fontSizes.xlarge,
+                  }}
                   // Dropdown list container
                   dropdownStyles={[
                     styles.dropdown,
                     {
                       borderColor: colors.text,
-                      backgroundColor: colors.background,
+                      //backgroundColor: colors.background,
                     },
                   ]}
                   // Country name text in each row
@@ -140,9 +147,11 @@ export default function LoginScreen({navigation}) {
                     fontFamily: fonts.regular,
                   }}
                   // Each row background
-                  countryNameContainerStyles={{
-                    backgroundColor: colors.background,
-                  }}
+                  countryNameContainerStyles={
+                    {
+                      //backgroundColor: colors.background,
+                    }
+                  }
                 />
               </View>
               <TextInput
@@ -151,8 +160,8 @@ export default function LoginScreen({navigation}) {
                 style={[
                   styles.phoneInput,
                   {
-                    backgroundColor: colors.background,
-                    borderColor: colors.text,
+                    //backgroundColor: !colors.background,
+                    //borderColor: !colors.text,
                   },
                 ]}
                 placeholder="Enter Number..."
@@ -160,14 +169,14 @@ export default function LoginScreen({navigation}) {
                 value={phone}
                 onChangeText={handlePhoneChange}
                 maxLength={10}
-                left={<TextInput.Icon icon="phone" color={colors.text} />}
-                theme={{
-                  colors: {
-                    primary: colors.primary,
-                    text: colors.text,
-                    placeholder: colors.text,
-                  },
-                }}
+                left={<TextInput.Icon icon="phone" color={!colors.text} />}
+                // theme={{
+                //   colors: {
+                //     primary: colors.primary,
+                //     text: colors.text,
+                //     placeholder: colors.text,
+                //   },
+                // }}
               />
             </View>
             <TouchableOpacity
@@ -243,8 +252,8 @@ const styles = StyleSheet.create({
   phoneInput: {
     flex: 1,
     borderRadius: moderateScale(5),
-    fontSize: moderateScale(16),
-    paddingVertical: moderateScale(4),
+    fontSize: moderateScale(15),
+    // paddingVertical: moderateScale(4),
   },
   button: {
     width: '80%',
