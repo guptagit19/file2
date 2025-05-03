@@ -9,7 +9,8 @@ export const Strings = {
   communityTab: 'Community',
   lifePartnerTab: 'Life Partner',
   // On the Login screen, you’re asking the user to enter their phone and request an OTP
-  loginTitle: 'Enter your phone number to continue',
+  loginTitle: 'Enter your phone number',
+  loginSubTitle : 'To Continue',
   // The button sends the OTP
   submit: 'Send OTP',
   verify: 'Verify OTP',
@@ -22,7 +23,7 @@ export const Strings = {
   age: 'Age',
   female: 'Female',
   male: 'Male',
-  registerTitle: 'Register',
+  registerTitle: 'Basic Details Register',
   genderQuestion: 'What is your gender?',
   termsPrefix: 'I accept the ',
   termsLink: 'Terms & Conditions',

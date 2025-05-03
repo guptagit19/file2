@@ -1,3 +1,4 @@
+/* eslint-disable react-native/no-inline-styles */
 // src/screens/RegisterScreen.js
 import React, {
   useCallback,
@@ -16,6 +17,7 @@ import {
   KeyboardAvoidingView,
   Animated,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -28,13 +30,12 @@ import {ThemeContext} from '../contexts/ThemeContext';
 import useKeyboardOffsetHeight from '../hooks/useKeyboardOffsetHeight';
 import {moderateScale} from '../constants/metrics';
 import {Strings} from '../constants/strings';
-import {APIsPost, endpoints} from '../APIs/apiService';
+import {APIsPost, endPoints} from '../APIs/apiService';
 import {storage} from '../contexts/storagesMMKV';
 //import {requestNotificationPermission} from '../components/FCMService';
 
 export default function RegisterScreen({navigation}) {
   const {colors, fonts, fontSizes} = useContext(ThemeContext);
-console.log('Current Theme Colors:', colors);
   const {isConnected} = useContext(ConnectivityContext);
   const keyboardHeight = useKeyboardOffsetHeight();
   const slideAnim = useRef(new Animated.Value(0)).current;
@@ -43,7 +44,7 @@ console.log('Current Theme Colors:', colors);
   useEffect(() => {
     Animated.timing(slideAnim, {
       toValue: -keyboardHeight / 7,
-      duration: 200,
+      duration: 350,
       useNativeDriver: true,
     }).start();
   }, [keyboardHeight, slideAnim]);
@@ -59,17 +60,20 @@ console.log('Current Theme Colors:', colors);
       .trim(),
     email: Yup.string().email().required('Email is required').trim(),
     age: Yup.string()
-      .matches(/^\[0-9]+\$/, 'Age must be a number')
+      .matches(/^[0-9]+$/, 'Age must be a number')
       .min(2, 'Invalid Age')
       .max(2, 'Invalid Age')
       .required('Age is required')
       .trim(),
     gender: Yup.string().required('Gender is required').trim(),
-    terms: Yup.boolean().oneOf([true], 'Terms & Conditions must be checked.'),
+    termsCondition: Yup.boolean().oneOf(
+      [true],
+      'Terms & Conditions must be checked.',
+    ),
   });
 
   const handleRegister = useCallback(
-    async (values, {resetForm}) => {
+    async (values, {resetForm, setErrors }) => {
       if (!isConnected) {
         Toast.show({
           type: 'info',
@@ -83,8 +87,10 @@ console.log('Current Theme Colors:', colors);
       //const payload = {...values, fcmtoken: fcmToken};
       const payload = {...values, fcmtoken: ''};
       try {
-        const response = await APIsPost(endpoints.registerUser, payload);
-        if (response.status === 201) {
+        console.log('payload', payload);
+        const response = await APIsPost(endPoints.registerUser, payload);
+        console.log('response', response);
+        if (response.status === 200) {
           storage.set('isRegistered', true);
           storage.set('userPerDetails', JSON.stringify(response.data));
           Toast.show({type: 'success', text1: Strings.registrationSuccess});
@@ -97,12 +103,21 @@ console.log('Current Theme Colors:', colors);
             text2: response.data?.message || Strings.registrationFailed,
           });
         }
-      } catch {
-        Toast.show({
-          type: 'error',
-          text1: Strings.error,
-          text2: Strings.somethingWrong,
-        });
+      } catch (error) {
+        // assume backend sent { message: "Validation failed", data: { field1: msg1, … }}
+        console.log('err -> ',error);
+        //const fieldErrors = error.response?.data?.data;
+        //console.log('fieldErrors -> ',fieldErrors);
+        if (error && typeof error === 'object') {
+          // pass those directly into Formik’s errors
+          setErrors(error);
+        } else {
+          // fallback toast
+          Toast.show({
+            type: 'error',
+            text1: error.message || Strings.somethingWrong,
+          });
+        }
       } finally {
         setSubmitting(false);
       }
@@ -149,7 +164,7 @@ console.log('Current Theme Colors:', colors);
               email: '',
               age: '',
               gender: '',
-              terms: false,
+              termsCondition: false,
               phoneNumber: storage.getString('phoneNumber'),
             }}
             validationSchema={validationSchema}
@@ -172,22 +187,24 @@ console.log('Current Theme Colors:', colors);
                       keyboardType={field === 'age' ? 'numeric' : 'default'}
                       placeholder={`Enter your ${field}...`}
                       value={values[field]}
-                      onChangeText={txt => setFieldValue(field, txt)}
+                      onChangeText={txt => setFieldValue(field, txt.trim())}
                       style={[
                         styles.input,
                         {
-                          borderColor: colors.teal,
+                          borderWidth: 0,
+                          borderColor: colors.error,
                           //backgroundColor: colors.background,
                         },
                       ]}
                       theme={{
                         colors: {
+                          borderWidth: 10,
+                          borderColor: colors.error,
                           primary: colors.primary,
                           text: colors.text,
                           placeholder: colors.text,
                         },
                       }}
-
                       left={
                         <TextInput.Icon
                           icon={Strings.icons[field]}
@@ -243,41 +260,59 @@ console.log('Current Theme Colors:', colors);
                   ))}
                 </View>
                 {errors.gender && touched.gender && (
-                  <Text style={[styles.errorText, {color: colors.error}]}>
+                  <Text
+                    style={[
+                      styles.errorText,
+                      {color: colors.error, borderColor: colors.error},
+                    ]}>
                     {errors.gender}
                   </Text>
                 )}
 
                 <View style={styles.termsContainer}>
                   <TouchableOpacity
-                    onPress={() => setFieldValue('terms', !values.terms)}>
+                    style={{flexDirection: 'row', alignItems: 'center'}}
+                    onPress={() =>
+                      setFieldValue('termsCondition', !values.termsCondition)
+                    }>
                     <Icon
                       name={
-                        values.terms ? 'checkbox-outline' : 'square-outline'
+                        values.termsCondition
+                          ? 'checkbox-outline'
+                          : 'square-outline'
                       }
                       size={moderateScale(20)}
-                      color={values.terms ? colors.primary : colors.error}
+                      color={
+                        values.termsCondition ? colors.primary : colors.error
+                      }
                     />
-
                     <Text
                       style={[
                         styles.termsText,
-                        {color: colors.text, fontFamily: fonts.regular},
+                        {
+                          color: colors.text,
+                          fontFamily: fonts.regular,
+                          textAlign: 'center',
+                        },
                       ]}>
                       {Strings.termsPrefix}
                     </Text>
                   </TouchableOpacity>
-
                   <TouchableOpacity
+                    style={{marginLeft: moderateScale(4)}}
                     onPress={() => navigation.navigate('TermsAndConditions')}>
                     <Text style={[styles.linkText, {color: colors.primary}]}>
                       {Strings.termsLink}
                     </Text>
                   </TouchableOpacity>
                 </View>
-                {errors.terms && touched.terms && (
-                  <Text style={[styles.errorText, {color: colors.error}]}>
-                    {errors.terms}
+                {errors.termsCondition && touched.termsCondition && (
+                  <Text
+                    style={[
+                      styles.errorText,
+                      {color: colors.error, borderColor: colors.error},
+                    ]}>
+                    {errors.termsCondition}
                   </Text>
                 )}
 
@@ -328,7 +363,6 @@ const styles = StyleSheet.create({
   input: {borderRadius: moderateScale(5)},
   label: {
     textAlign: 'center',
-    //alignSelf: 'flex-start',
     marginLeft: moderateScale(16),
     marginTop: moderateScale(12),
   },
@@ -350,6 +384,7 @@ const styles = StyleSheet.create({
 
   optionText: {marginTop: moderateScale(4)},
   termsContainer: {
+    justifyContent: 'center',
     flexDirection: 'row',
     alignItems: 'center',
     marginVertical: moderateScale(12),
@@ -366,5 +401,4 @@ const styles = StyleSheet.create({
   },
   submitText: {fontSize: moderateScale(18)},
   errorText: {marginTop: moderateScale(4)},
-  
 });

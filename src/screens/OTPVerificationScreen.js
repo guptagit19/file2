@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+/* eslint-disable curly */
 // src/screens/OTPVerificationScreen.js
 import React, {
   useState,
@@ -40,7 +42,7 @@ export default function OTPVerificationScreen({navigation}) {
     // Slide up when keyboard shows
     Animated.timing(slideAnim, {
       toValue: -keyboardHeight / 2,
-      duration: 250,
+      duration: 500,
       useNativeDriver: true,
     }).start();
   }, [keyboardHeight, slideAnim]);
@@ -70,7 +72,14 @@ export default function OTPVerificationScreen({navigation}) {
 
   const handleDigit = useCallback(
     (value, index) => {
-      if (!/^[0-9]?$/.test(value)) return;
+      if (!/^[0-9]?$/.test(value)) {
+        Toast.show({
+          type: 'error',
+          text1: 'Invalid number',
+          text2: 'Please enter only numbers.',
+        });
+        return;
+      }
       const newOtp = [...otp];
       newOtp[index] = value;
       setOtp(newOtp);

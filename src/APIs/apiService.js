@@ -1,6 +1,7 @@
 import axios from 'axios';
+import Toast from 'react-native-toast-message';
 
-export const API_BASE_URL = 'http://192.168.0.159:8080/social'; // no trailing slash
+export const API_BASE_URL = 'http://192.168.0.181:8080/users'; // no trailing slash
 
 export const endPoints = {
   generateOtp: '/otp/generateOtp',
@@ -34,14 +35,18 @@ api.interceptors.request.use(
 
 // Response interceptor (optional: for handling global errors or modifying responses)
 api.interceptors.response.use(
-  response => {
-    // console.log('Response received:', response);
-    return response;
-  },
+  response => response,
   error => {
-    // console.log('Response error:', error);
+    // prefer the server’s `data.message`, fallback to generic
+    const msg = error.response?.data?.message || error.message;
+    // show your custom toast style
+    Toast.show({
+      type: 'error',
+      text1: 'Request Failed',
+      text2: msg,
+    });
     return Promise.reject(error);
-  },
+  }
 );
 
 export const APIsGet = async (endpoint, params = {}) => {
@@ -61,9 +66,10 @@ export const APIsPost = async (endpoint, data = {}) => {
     const response = await api.post(endpoint, data);
     return response;
   } catch (error) {
-    const msg = error.response?.data?.message || error.message;
+    //const msg = error.response?.data?.message || error.message;
+    const msg = error.response?.data?.data || error.message;
     console.error(`POST ${endpoint} failed:`, msg);
-    throw new Error(msg);
+    throw error.response?.data?.data || error;
   }
 };
 

@@ -9,7 +9,9 @@ export const Colors = {
     teal: '#008080', // your custom color
   },
   dark: {
-    background: '#121212',
+    //background: '#121212',
+    //background: '#142842',
+    background: '#1E232A',
     text: '#EEEEEE',
     primary: '#1E88E5',
     error: '#EF5350',

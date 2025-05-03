@@ -30,7 +30,7 @@ export default function App() {
                 Platform.OS === 'android' ? StatusBar.currentHeight : 0,
             }}>
             <NavigationContainer>
-              <Stack.Navigator initialRouteName = "Main" screenOptions={{headerShown: false}}>
+              <Stack.Navigator initialRouteName = "RegisterScreen" screenOptions={{headerShown: false}}>
                 <Stack.Screen name="Splash" component={SplashScreen} />
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="LoginScreen" component={LoginScreen} />
