@@ -1,6 +1,7 @@
 // src/constants/strings.js
 export const Strings = {
-  splashTitle: 'Checking Connection & Permissions...',
+  //splashTitle: 'Checking Connection & Permissions...',
+  splashTitle: 'Welcome to MakeConnection App..',
   noInternet: 'No Internet Connection',
   homeWelcome: 'Welcome to Your App!',
   offlineBanner: 'You are currently offline',

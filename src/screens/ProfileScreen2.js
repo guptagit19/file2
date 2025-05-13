@@ -69,17 +69,18 @@ export default function ProfileScreen2() {
       }
 
       try {
-        console.log('phoneNumber ',storage.getString('phoneNumber'));
+        console.log('phoneNumber ', storage.getString('phoneNumber'));
         const {status, data} = await APIsGet(endPoints.checkPhone, {
           phoneNumber: storage.getString('phoneNumber'),
         });
-        console.log('status',status,' data -> ',data);
-        if (status === 200) {
+        console.log('status', status, ' data -> ', data);
+        if (status === 200 && data.message === 'User Found' && data.bluValue) {
           setProfile(data.data);
           storage.set('user_profile', JSON.stringify(data.data));
-          console.log('user_profile -> ',storage.getString('user_profile'));
+          console.log('user_profile -> ', storage.getString('user_profile'));
         } else {
           Toast.show({type: 'error', text1: 'Load error', text2: data.message});
+          return;
         }
       } catch (err) {
         Toast.show({type: 'error', text1: 'Error', text2: err.message});
@@ -101,10 +102,10 @@ export default function ProfileScreen2() {
     }
     setSaving(true);
     try {
-      console.log('profile in profile -> ',profile);
+      console.log('profile in profile -> ', JSON.stringify(profile));
       const {status, data} = await APIsPut(endPoints.updateUser, profile);
 
-      if (status === 200) {
+      if (status === 200 && data.message === 'User Saved Successfully' && data.bluValue ) {
         storage.set('user_profile', JSON.stringify(profile));
         Toast.show({type: 'success', text1: data.message});
       } else {
@@ -116,6 +117,17 @@ export default function ProfileScreen2() {
       setSaving(false);
     }
   };
+
+  if (!loading && !profile) {
+    // we tried to load, it failed, and no cached profile
+    return (
+      <View style={[styles.loader, {backgroundColor: colors.background}]}>
+        <Text style={{color: colors.error, fontSize: moderateScale(16)}}>
+          Could not load profile.
+        </Text>
+      </View>
+    );
+  }
 
   if (loading || !profile) {
     return (
@@ -136,12 +148,14 @@ export default function ProfileScreen2() {
       ]}>
       <KeyboardAvoidingView
         style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        keyboardVerticalOffset={moderateScale(60)}>
+        //behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        //keyboardVerticalOffset={moderateScale(60)}
+        >
         <ScrollView
           contentContainerStyle={styles.inner}
-          keyboardShouldPersistTaps="handled">
-          <BreakerText text="📸 Profile Images" />
+          //keyboardShouldPersistTaps="handled"
+          >
+          <BreakerText text="📸 Add Your Profile Images" />
           <PhotoPicker
             value={profile.images}
             onChange={imgs => setProfile({...profile, images: imgs})}

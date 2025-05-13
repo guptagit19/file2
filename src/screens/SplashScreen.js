@@ -42,7 +42,7 @@ const SplashScreen = () => {
     })().finally(() => {
       setTimeout(() => {
         if (isRegistered) {
-          navigation.replace('Main');
+          navigation.replace('ProfileScreen2');
         } else {
           navigation.replace('LoginScreen');
         }

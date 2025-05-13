@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 
-export const API_BASE_URL = 'http://192.168.0.181:8080/users'; // no trailing slash
+export const API_BASE_URL = 'http://192.168.165.237:8080/users'; // no trailing slash
 
 export const endPoints = {
   generateOtp: '/otp/generateOtp',
@@ -74,13 +74,15 @@ export const APIsPost = async (endpoint, data = {}) => {
   }
 };
 
-export const APIsPut = async (endpoint, params = {}) => {
+// Replace your existing APIsPut with this:
+
+export const APIsPut = async (endpoint, data = {}) => {
   try {
-    const {status, data} = await api.put(endpoint, {params});
-    console.log('status -> ',status,'data -> ',data);
-    return {status, data};
+    // Send 'data' as the JSON body, not inside { params: ... }
+    const {status, data: respData} = await api.put(endpoint, data);
+    console.log(`PUT ${endpoint} → status:`, status, 'data:', respData);
+    return {status, data: respData};
   } catch (error) {
-    console.log('error -> ',error);
     const msg = error.response?.data?.message || error.message;
     console.error(`PUT ${endpoint} failed:`, msg);
     throw new Error(msg);
