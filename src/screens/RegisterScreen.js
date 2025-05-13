@@ -17,7 +17,6 @@ import {
   KeyboardAvoidingView,
   Animated,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -32,6 +31,7 @@ import {moderateScale} from '../constants/metrics';
 import {Strings} from '../constants/strings';
 import {APIsPost, endPoints} from '../APIs/apiService';
 import {storage} from '../contexts/storagesMMKV';
+import BreakerText from '../components/ui/BreakerText';
 //import {requestNotificationPermission} from '../components/FCMService';
 
 export default function RegisterScreen({navigation}) {
@@ -42,6 +42,7 @@ export default function RegisterScreen({navigation}) {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    storage.set('phoneNumber', '+919380584233');
     Animated.timing(slideAnim, {
       toValue: -keyboardHeight / 7,
       duration: 350,
@@ -73,7 +74,7 @@ export default function RegisterScreen({navigation}) {
   });
 
   const handleRegister = useCallback(
-    async (values, {resetForm, setErrors }) => {
+    async (values, {resetForm, setErrors}) => {
       if (!isConnected) {
         Toast.show({
           type: 'info',
@@ -90,11 +91,16 @@ export default function RegisterScreen({navigation}) {
         console.log('payload', payload);
         const response = await APIsPost(endPoints.registerUser, payload);
         console.log('response', response);
-        if (response.status === 200) {
+        if (
+          response.status === 200 &&
+          response.data.message === 'User Saved Successfully' &&
+          response.data.bluValue
+        ) {
           storage.set('isRegistered', true);
-          storage.set('userPerDetails', JSON.stringify(response.data));
+          console.log('response.data.data - ', response.data.data);
+          storage.set('user_profile', JSON.stringify(response.data.data));
           Toast.show({type: 'success', text1: Strings.registrationSuccess});
-          navigation.replace('Main');
+          navigation.replace('ProfileScreen2');
           resetForm();
         } else {
           Toast.show({
@@ -105,7 +111,7 @@ export default function RegisterScreen({navigation}) {
         }
       } catch (error) {
         // assume backend sent { message: "Validation failed", data: { field1: msg1, … }}
-        console.log('err -> ',error);
+        console.log('err -> ', error);
         //const fieldErrors = error.response?.data?.data;
         //console.log('fieldErrors -> ',fieldErrors);
         if (error && typeof error === 'object') {
@@ -113,9 +119,10 @@ export default function RegisterScreen({navigation}) {
           setErrors(error);
         } else {
           // fallback toast
+          console.log('error -> ', error);
           Toast.show({
             type: 'error',
-            text1: error.message || Strings.somethingWrong,
+            text1: error || Strings.somethingWrong,
           });
         }
       } finally {
@@ -219,7 +226,7 @@ export default function RegisterScreen({navigation}) {
                     )}
                   </View>
                 ))}
-
+                <BreakerText text="OK" />
                 <Text
                   style={[
                     styles.label,

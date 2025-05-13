@@ -1,4 +1,3 @@
-
 /* eslint-disable no-unused-vars */
 /* eslint-disable react-native/no-inline-styles */
 // src/screens/LoginScreen.js
@@ -49,7 +48,7 @@ export default function LoginScreen({navigation}) {
     }).start();
   }, [keyboardHeight, slideAnim]);
 
-  const handlePhoneChange = (text) => {
+  const handlePhoneChange = text => {
     // Use a regular expression to check if the input contains only numbers
     const isNumeric = /^[0-9]+$/.test(text);
 
@@ -92,22 +91,23 @@ export default function LoginScreen({navigation}) {
     //Alert.alert('fullPhoneNumber', fullPhoneNumber);
     setLoading(true);
     try {
-      const response = await APIsGet(endPoints.generateOtp, {
+      const {status, data} = await APIsGet(endPoints.generateOtp, {
         phoneNumber: fullPhoneNumber,
       });
+      console.log('Login status - ', status, 'data - ', data, 'data.data - ', data.data);
       if (
-        response.status === 200 &&
-        response.message === 'OTP sent successfully' &&
-        response.bolValue
+        status === 200 &&
+        data.message === 'OTP sent successfully' &&
+        data.bluValue
       ) {
-        Toast.show({type: 'success', text1: response.message});
+        Toast.show({type: 'success', text1: data.message});
         storage.set('phoneNumber', fullPhoneNumber);
         navigation.replace('OTPVerificationScreen');
       } else {
         Toast.show({
           type: 'error',
           text1: 'OTP failed',
-          text2: response.message || 'Try again later',
+          text2: data.message || 'Try again later',
         });
       }
     } catch (error) {

@@ -8,6 +8,8 @@ export const endPoints = {
   verifyOTP: '/otp/verifyOTP',
   checkPhone: '/user/checkPhoneNumber',
   registerUser: '/user/register',
+  getUserProfile: '/user/getUserProfile',
+  updateUser: '/user/updateUser',
 };
 
 const api = axios.create({
@@ -46,14 +48,13 @@ api.interceptors.response.use(
       text2: msg,
     });
     return Promise.reject(error);
-  }
+  },
 );
 
 export const APIsGet = async (endpoint, params = {}) => {
   try {
-    const response = await api.get(endpoint, {params});
-    console.log('APIsGet response :- ' + response);
-    return response;
+    const {status, data} = await api.get(endpoint, {params});
+    return {status, data};
   } catch (error) {
     const msg = error.response?.data?.message || error.message;
     console.error(`GET ${endpoint} failed:`, msg);
@@ -73,11 +74,13 @@ export const APIsPost = async (endpoint, data = {}) => {
   }
 };
 
-export const APIsPut = async (endpoint, data = {}) => {
+export const APIsPut = async (endpoint, params = {}) => {
   try {
-    const response = await api.put(endpoint, data);
-    return response.data;
+    const {status, data} = await api.put(endpoint, {params});
+    console.log('status -> ',status,'data -> ',data);
+    return {status, data};
   } catch (error) {
+    console.log('error -> ',error);
     const msg = error.response?.data?.message || error.message;
     console.error(`PUT ${endpoint} failed:`, msg);
     throw new Error(msg);

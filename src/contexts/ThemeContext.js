@@ -1,11 +1,10 @@
 // src/contexts/ThemeContext.js
 import React, {createContext, useState, useEffect} from 'react';
 import {Appearance} from 'react-native';
-import {MMKV} from 'react-native-mmkv';
+import {storage} from './storagesMMKV';
 import {Colors} from '../constants/colors';
-import {Fonts, FontSizes} from '../constants/fonts';
+import {Fonts, FontSizes, FontWeights} from '../constants/fonts';
 
-const storage = new MMKV();
 const STORAGE_KEY = 'user_theme';
 
 export const ThemeContext = createContext({
@@ -49,6 +48,7 @@ export const ThemeProvider = ({children}) => {
         colors: Colors[theme],
         fonts: Fonts,
         fontSizes: FontSizes,
+        fontWeights: FontWeights,
       }}>
       {children}
     </ThemeContext.Provider>

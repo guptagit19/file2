@@ -1,14 +1,14 @@
 import {StyleSheet, Text, View} from 'react-native';
 import React from 'react';
 
-const Profile = () => {
+const PhotoPicker = () => {
   return (
     <View>
-      <Text>Profile</Text>
+      <Text>PhotoPicker</Text>
     </View>
   );
 };
 
-export default Profile;
+export default PhotoPicker;
 
 const styles = StyleSheet.create({});

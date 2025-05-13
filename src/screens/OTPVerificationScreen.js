@@ -30,7 +30,7 @@ import {ThemeContext} from '../contexts/ThemeContext';
 import {moderateScale} from '../constants/metrics';
 import {Strings} from '../constants/strings';
 import {storage} from '../contexts/storagesMMKV';
-import {APIsGet, endpoints} from '../APIs/apiService';
+import {APIsGet, endPoints} from '../APIs/apiService';
 
 export default function OTPVerificationScreen({navigation}) {
   const {colors, fonts, fontSizes} = useContext(ThemeContext);
@@ -124,16 +124,28 @@ export default function OTPVerificationScreen({navigation}) {
     }
     setLoading(true);
     try {
-      const res = await APIsGet(endpoints.verifyOTP, {phoneNumber, otp: code});
-      if (res.status === 200 && res.data === 'OTP verified successfully') {
+      const {status, data} = await APIsGet(endPoints.verifyOTP, {
+        phoneNumber,
+        otp: code,
+      });
+      console.log('Verify status - ', status, 'data - ', data);
+      if (status === 200 && data.data === 'OTP verified successfully') {
+        storage.set('isRegistered', true);
         Toast.show({type: 'success', text1: 'OTP Verified'});
-        const chk = await APIsGet(endpoints.checkPhoneNumber, {phoneNumber});
-        navigation.replace(chk.data ? 'Main' : 'RegisterScreenDemo');
+        const {status, data} = await APIsGet(endPoints.checkPhone, {
+          phoneNumber,
+        });
+        if (status === 200 && data.message === 'User Found' && data.bluValue) {
+          storage.set('user_profile', JSON.stringify(data.data));
+          navigation.replace('ProfileScreen2');
+        } else {
+          navigation.replace('RegisterScreen');
+        }
       } else {
         Toast.show({
           type: 'error',
           text1: 'Verification Failed',
-          text2: res.data || 'Try again',
+          text2: data.data || 'Try again',
         });
         setOtp(['', '', '', '']);
         inputRefs[0].current.focus();
@@ -157,10 +169,12 @@ export default function OTPVerificationScreen({navigation}) {
     }
     setLoading(true);
     try {
-      const res = await APIsGet(endpoints.generateOtp, {phoneNumber});
+      const {status, data} = await APIsGet(endPoints.generateOtp, {
+        phoneNumber,
+      });
       Toast.show({
-        type: res.status === 200 ? 'success' : 'error',
-        text1: res.message || 'OTP resent',
+        type: status === 200 ? 'success' : 'error',
+        text1: data.message || 'OTP resent',
       });
       setOtp(['', '', '', '']);
       inputRefs[0].current.focus();

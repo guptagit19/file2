@@ -16,6 +16,7 @@ import HomeScreen from './src/screens/HomeScreen';
 import LoginScreen from './src/screens/LoginScreen';
 import OTPVerificationScreen from './src/screens/OTPVerificationScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
+import ProfileScreen2 from './src/screens/ProfileScreen2';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -30,12 +31,13 @@ export default function App() {
                 Platform.OS === 'android' ? StatusBar.currentHeight : 0,
             }}>
             <NavigationContainer>
-              <Stack.Navigator initialRouteName = "RegisterScreen" screenOptions={{headerShown: false}}>
+              <Stack.Navigator initialRouteName = "Splash" screenOptions={{headerShown: false}}>
                 <Stack.Screen name="Splash" component={SplashScreen} />
                 <Stack.Screen name="Home" component={HomeScreen} />
                 <Stack.Screen name="LoginScreen" component={LoginScreen} />
                 <Stack.Screen name="OTPVerificationScreen" component={OTPVerificationScreen} />
                 <Stack.Screen name="RegisterScreen" component={RegisterScreen} />
+                <Stack.Screen name="ProfileScreen2" component={ProfileScreen2} />
                 <Stack.Screen name="Main" component={TabNavigator} />
               </Stack.Navigator>
             </NavigationContainer>
