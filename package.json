@@ -10,7 +10,11 @@
     "test": "jest"
   },
   "dependencies": {
+    "@react-native-community/datetimepicker": "^8.3.0",
     "@react-native-community/netinfo": "^11.4.1",
+    "@react-native-firebase/app": "^22.2.0",
+    "@react-native-firebase/messaging": "^22.2.0",
+    "@react-native-firebase/storage": "^22.2.0",
     "@react-navigation/bottom-tabs": "^7.3.10",
     "@react-navigation/material-top-tabs": "^7.2.10",
     "@react-navigation/native": "^7.1.6",
@@ -25,7 +29,7 @@
     "react-native-image-picker": "^8.2.1",
     "react-native-mmkv": "^3.2.0",
     "react-native-pager-view": "^6.7.1",
-    "react-native-paper": "^5.14.0",
+    "react-native-paper": "^5.14.3",
     "react-native-permissions": "^5.4.0",
     "react-native-reanimated": "^3.17.5",
     "react-native-safe-area-context": "^5.4.0",

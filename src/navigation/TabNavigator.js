@@ -13,6 +13,7 @@ import {Strings} from '../constants/strings';
 import DatingScreen from '../screens/DatingScreen';
 import CommunityScreen from '../screens/CommunityScreen';
 import LifePartnerScreen from '../screens/LifePartnerScreen';
+import ProfileScreen2 from '../screens/ProfileScreen2';
 
 const Tab = createMaterialTopTabNavigator();
 
@@ -20,6 +21,12 @@ export default function TabNavigator() {
   const {colors, fonts, fontSizes} = useContext(ThemeContext);
 
   const tabs = [
+    {
+      name: 'Profile',
+      component: ProfileScreen2,
+      icon: ['person-outline', 'person'],
+      label: 'Profile',
+    },
     {
       name: 'Dating',
       component: DatingScreen,

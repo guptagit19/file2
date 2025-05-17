@@ -36,6 +36,7 @@ export default function SubscriptionStatus({navigation, subscription}) {
 
   if (!subscription) {
     return (
+      <TouchableOpacity activeOpacity={0.7}>
       <View
         style={[
           styles.container,
@@ -69,6 +70,7 @@ export default function SubscriptionStatus({navigation, subscription}) {
           </Text>
         </TouchableOpacity>
       </View>
+      </TouchableOpacity>
     );
   }
 
@@ -85,6 +87,7 @@ export default function SubscriptionStatus({navigation, subscription}) {
   const isExpired = remainingDays < 0;
 
   return (
+    <TouchableOpacity activeOpacity={0.7}>
     <View
       style={[
         styles.container,
@@ -192,6 +195,7 @@ export default function SubscriptionStatus({navigation, subscription}) {
         </>
       )}
     </View>
+    </TouchableOpacity>
   );
 }
 

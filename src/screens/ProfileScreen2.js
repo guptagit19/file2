@@ -12,6 +12,9 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Animated,
+  Linking,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import Toast from 'react-native-toast-message';
 
@@ -44,9 +47,18 @@ export default function ProfileScreen2() {
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   // Animate up/down when keyboard opens/closes
+  // useEffect(() => {
+  //   Animated.timing(slideAnim, {
+  //     toValue: keyboardHeight > 0 ? -keyboardHeight / 1 : 0,
+  //     duration: 500,
+  //     useNativeDriver: true,
+  //   }).start();
+  // }, [keyboardHeight, slideAnim]);
+
   useEffect(() => {
+    // Slide up when keyboard shows
     Animated.timing(slideAnim, {
-      toValue: keyboardHeight > 0 ? -keyboardHeight / 1 : 0,
+      toValue: -keyboardHeight / 1,
       duration: 500,
       useNativeDriver: true,
     }).start();
@@ -105,7 +117,11 @@ export default function ProfileScreen2() {
       console.log('profile in profile -> ', JSON.stringify(profile));
       const {status, data} = await APIsPut(endPoints.updateUser, profile);
 
-      if (status === 200 && data.message === 'User Saved Successfully' && data.bluValue ) {
+      if (
+        status === 200 &&
+        data.message === 'User Saved Successfully' &&
+        data.bluValue
+      ) {
         storage.set('user_profile', JSON.stringify(profile));
         Toast.show({type: 'success', text1: data.message});
       } else {
@@ -121,10 +137,41 @@ export default function ProfileScreen2() {
   if (!loading && !profile) {
     // we tried to load, it failed, and no cached profile
     return (
-      <View style={[styles.loader, {backgroundColor: colors.background}]}>
-        <Text style={{color: colors.error, fontSize: moderateScale(16)}}>
-          Could not load profile.
+      <View
+        style={[
+          styles.loader,
+          {
+            padding: moderateScale(16),
+            backgroundColor: colors.background,
+          },
+        ]}>
+        <Text
+          style={{
+            color: colors.error,
+            fontSize: moderateScale(16),
+            textAlign: 'center',
+            marginBottom: moderateScale(12),
+          }}>
+          Could not load profile. Delete cache data and reopen.
         </Text>
+
+        <TouchableOpacity
+          onPress={() => Linking.openSettings()}
+          style={{
+            backgroundColor: colors.primary,
+            paddingVertical: moderateScale(10),
+            paddingHorizontal: moderateScale(20),
+            borderRadius: moderateScale(8),
+          }}>
+          <Text
+            style={{
+              color: colors.background,
+              fontSize: moderateScale(16),
+              textAlign: 'center',
+            }}>
+            Open App Settings
+          </Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -138,119 +185,134 @@ export default function ProfileScreen2() {
   }
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          transform: [{translateY: slideAnim}],
-        },
-      ]}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        //behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        //keyboardVerticalOffset={moderateScale(60)}
-        >
-        <ScrollView
-          contentContainerStyle={styles.inner}
-          //keyboardShouldPersistTaps="handled"
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={[styles.container, {backgroundColor: colors.background}]}>
+        <Animated.View
+          style={[styles.flex, {transform: [{translateY: slideAnim}]}]}>
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            //keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}
           >
-          <BreakerText text="📸 Add Your Profile Images" />
-          <PhotoPicker
-            value={profile.images}
-            onChange={imgs => setProfile({...profile, images: imgs})}
-          />
+            <ScrollView contentContainerStyle={styles.inner}>
+              <BreakerText text="📸 Add Your Profile Images" />
+              <TouchableOpacity activeOpacity={0.7}>
+                <PhotoPicker
+                  value={profile.images}
+                  onChange={imgs => setProfile({...profile, images: imgs})}
+                />
+              </TouchableOpacity>
+              <BreakerText text="📦 Your Subscription:" />
+              <SubscriptionStatus subscription={profile.activeSubscription} />
 
-          <BreakerText text="📦 Your Subscription:" />
-          <SubscriptionStatus subscription={profile.activeSubscription} />
+              <BreakerText text="🛡️ Your Trust:" />
+              <TrustRating
+                icon="tie"
+                label="🤝 Your Trust"
+                rating={parseFloat(profile.trust)}
+                max={5}
+              />
 
-          <BreakerText text="🛡️ Your Trust:" />
-          <TrustRating
-            icon="tie"
-            label="🤝 Your Trust"
-            rating={parseFloat(profile.trust)}
-            max={5}
-          />
+              <BreakerText text="🌿 Your Natures:" />
+              <TouchableOpacity activeOpacity={0.7}>
+                <View
+                  style={[
+                    styles.wrapper,
+                    {
+                      borderColor: colors.border,
+                      backgroundColor: colors.surface,
+                    },
+                  ]}>
+                  <Text
+                    style={[
+                      styles.natureText,
+                      {
+                        color: colors.text,
+                        fontFamily: fonts.medium,
+                        fontSize: fontSizes.medium,
+                      },
+                    ]}>
+                    Add your natures
+                  </Text>
+                  <ScrollView
+                    style={{width: '100%'}}
+                    contentContainerStyle={styles.tagsContainer}
+                    showsVerticalScrollIndicator={false}>
+                    {profile.natures.map((item, idx) => (
+                      <HintButton
+                        key={idx}
+                        text={`✨ ${item}`}
+                        onPress={() => {}}
+                      />
+                    ))}
+                  </ScrollView>
+                </View>
+              </TouchableOpacity>
 
-          <BreakerText text="🌿 Your Natures:" />
-          <View
-            style={[
-              styles.wrapper,
-              {borderColor: colors.border, backgroundColor: colors.surface},
-            ]}>
-            <Text
-              style={[
-                styles.natureText,
-                {
-                  color: colors.text,
-                  fontFamily: fonts.medium,
-                  fontSize: fontSizes.medium,
-                },
-              ]}>
-              Add your natures
-            </Text>
-            <ScrollView
-              style={{width: '100%'}}
-              contentContainerStyle={styles.tagsContainer}
-              showsVerticalScrollIndicator={false}>
-              {profile.natures.map((item, idx) => (
-                <HintButton key={idx} text={`✨ ${item}`} onPress={() => {}} />
-              ))}
-            </ScrollView>
-          </View>
+              <BreakerText text="🌐 Social Media" />
+              <TouchableOpacity activeOpacity={0.7}>
+                <SocialMediaLinker
+                  value={profile.socialMedia}
+                  titleText="Link your social media"
+                  screen="ProfileScreen"
+                  onChange={val => setProfile({...profile, socialMedia: val})}
+                />
+              </TouchableOpacity>
 
-          <BreakerText text="🌐 Social Media" />
-          <SocialMediaLinker
-            value={profile.socialMedia}
-            onChange={val => setProfile({...profile, socialMedia: val})}
-          />
+              <BreakerText text="💼 Basic Details" />
+              <ProfileMandFields
+                values={profile}
+                onChange={(field, val) =>
+                  setProfile({...profile, [field]: val})
+                }
+              />
 
-          <BreakerText text="💼 Basic Details" />
-          <ProfileMandFields
-            values={profile}
-            onChange={(field, val) => setProfile({...profile, [field]: val})}
-          />
+              <BreakerText text="🌐 Languages" />
+              <DynamicBoxGrid
+                label="Language"
+                boxCount={5}
+                InstruText="Add languages you know"
+                value={profile.languages}
+                onChange={arr => setProfile({...profile, languages: arr})}
+              />
 
-          <BreakerText text="🌐 Languages" />
-          <DynamicBoxGrid
-            label="Language"
-            boxCount={5}
-            InstruText="Add languages you know"
-            value={profile.languages}
-            onChange={arr => setProfile({...profile, languages: arr})}
-          />
+              <BreakerText text="🔥 Interests" />
+              <DynamicBoxGrid
+                label="Interests"
+                boxCount={9}
+                InstruText="Add your interests"
+                value={profile.interests}
+                onChange={arr => setProfile({...profile, interests: arr})}
+              />
 
-          <BreakerText text="🔥 Interests" />
-          <DynamicBoxGrid
-            label="Interests"
-            boxCount={9}
-            InstruText="Add your interests"
-            value={profile.interests}
-            onChange={arr => setProfile({...profile, interests: arr})}
-          />
-
-          <TouchableOpacity
-            style={[
-              styles.saveBtn,
-              {backgroundColor: isConnected ? colors.primary : colors.disable},
-            ]}
-            onPress={handleSave}
-            disabled={!isConnected || saving}>
-            {saving ? (
-              <ActivityIndicator color={colors.background} />
-            ) : (
-              <Text
+              <TouchableOpacity
                 style={[
-                  styles.saveText,
-                  {color: colors.background, fontFamily: fonts.bold},
-                ]}>
-                Save Profile
-              </Text>
-            )}
-          </TouchableOpacity>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </Animated.View>
+                  styles.saveBtn,
+                  {
+                    backgroundColor: isConnected
+                      ? colors.primary
+                      : colors.disable,
+                  },
+                ]}
+                onPress={handleSave}
+                disabled={!isConnected || saving}>
+                {saving ? (
+                  <ActivityIndicator color={colors.background} />
+                ) : (
+                  <Text
+                    style={[
+                      styles.saveText,
+                      {color: colors.background, fontFamily: fonts.bold},
+                    ]}>
+                    Save Profile
+                  </Text>
+                )}
+              </TouchableOpacity>
+            </ScrollView>
+          </KeyboardAvoidingView>
+        </Animated.View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 }
 

@@ -94,7 +94,14 @@ export default function LoginScreen({navigation}) {
       const {status, data} = await APIsGet(endPoints.generateOtp, {
         phoneNumber: fullPhoneNumber,
       });
-      console.log('Login status - ', status, 'data - ', data, 'data.data - ', data.data);
+      console.log(
+        'Login status - ',
+        status,
+        'data - ',
+        data,
+        'data.data - ',
+        data.data,
+      );
       if (
         status === 200 &&
         data.message === 'OTP sent successfully' &&
@@ -214,6 +221,7 @@ export default function LoginScreen({navigation}) {
                 </View>
                 <TextInput
                   label="Phone Number"
+                  //mode="outlined"
                   mode="outlined"
                   style={[
                     styles.phoneInput,
@@ -234,13 +242,6 @@ export default function LoginScreen({navigation}) {
                       color={!colors.text}
                     />
                   }
-                  // theme={{
-                  //   colors: {
-                  //     primary: colors.primary,
-                  //     text: colors.text,
-                  //     placeholder: colors.text,
-                  //   },
-                  // }}
                 />
               </View>
               <TouchableOpacity

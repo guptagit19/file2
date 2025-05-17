@@ -1,12 +1,11 @@
 // src/components/ui/EditInfoRow.js
-import React, {useState, useEffect, useContext} from 'react';
+import React, {useState, useContext} from 'react';
 import {
   View,
   Text,
   TextInput,
   TouchableOpacity,
   StyleSheet,
-  Platform,
 } from 'react-native';
 import MaterialCommunityIcons from 'react-native-vector-icons/MaterialCommunityIcons';
 import {ThemeContext} from '../../contexts/ThemeContext';
@@ -105,80 +104,82 @@ export default function EditInfoRow({
 
   // Inline layout
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.surface,
-          borderColor: colors.border,
-        },
-      ]}>
-      <View style={styles.left}>
-        {icon && (
-          <MaterialCommunityIcons
-            name={icon}
-            size={moderateScale(20)}
-            color={colors.text}
-          />
-        )}
-        <Text
-          style={[
-            styles.label,
-            !icon && styles.noIconLabel,
-            {
-              color: colors.text,
-              fontFamily: fonts.medium,
-              fontSize: fontSizes.medium,
-            },
-          ]}>
-          {label}
-        </Text>
-      </View>
-
-      {isEditing ? (
-        <TextInput
-          value={tempValue}
-          onChangeText={setTempValue}
-          onBlur={handleSave}
-          autoFocus
-          keyboardType={keyboardType}
-          style={[
-            styles.input,
-            {
-              borderColor: colors.border,
-              color: colors.text,
-              fontFamily: fonts.regular,
-              fontSize: fontSizes.medium,
-            },
-          ]}
-        />
-      ) : (
-        <View style={styles.right}>
-          <Text
-            style={[
-              styles.value,
-              {
-                color: colors.text,
-                fontFamily: fonts.bold,
-                fontSize: fontSizes.medium,
-              },
-            ]}>
-            {value}
-            {suffix}
-          </Text>
-          <TouchableOpacity
-            onPress={() => setEditing(true)}
-            style={styles.editButton}
-            activeOpacity={0.7}>
+    <TouchableOpacity activeOpacity={0.7}>
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.surface,
+            borderColor: colors.border,
+          },
+        ]}>
+        <View style={styles.left}>
+          {icon && (
             <MaterialCommunityIcons
-              name="pencil"
+              name={icon}
               size={moderateScale(20)}
               color={colors.text}
             />
-          </TouchableOpacity>
+          )}
+          <Text
+            style={[
+              styles.label,
+              !icon && styles.noIconLabel,
+              {
+                color: colors.text,
+                fontFamily: fonts.medium,
+                fontSize: fontSizes.medium,
+              },
+            ]}>
+            {label}
+          </Text>
         </View>
-      )}
-    </View>
+
+        {isEditing ? (
+          <TextInput
+            value={tempValue}
+            onChangeText={setTempValue}
+            onBlur={handleSave}
+            autoFocus
+            keyboardType={keyboardType}
+            style={[
+              styles.input,
+              {
+                borderColor: colors.border,
+                color: colors.text,
+                fontFamily: fonts.regular,
+                fontSize: fontSizes.medium,
+              },
+            ]}
+          />
+        ) : (
+          <View style={styles.right}>
+            <Text
+              style={[
+                styles.value,
+                {
+                  color: colors.text,
+                  fontFamily: fonts.bold,
+                  fontSize: fontSizes.medium,
+                },
+              ]}>
+              {value}
+              {suffix}
+            </Text>
+            <TouchableOpacity
+              onPress={() => setEditing(true)}
+              style={styles.editButton}
+              activeOpacity={0.7}>
+              <MaterialCommunityIcons
+                name="pencil"
+                size={moderateScale(20)}
+                color={colors.text}
+              />
+            </TouchableOpacity>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
   );
 }
 

@@ -17,6 +17,8 @@ import {
   KeyboardAvoidingView,
   Animated,
   ActivityIndicator,
+  TouchableWithoutFeedback,
+  Keyboard,
 } from 'react-native';
 import {TextInput} from 'react-native-paper';
 import {Formik} from 'formik';
@@ -33,6 +35,7 @@ import {APIsPost, endPoints} from '../APIs/apiService';
 import {storage} from '../contexts/storagesMMKV';
 import BreakerText from '../components/ui/BreakerText';
 //import {requestNotificationPermission} from '../components/FCMService';
+import { requestNotificationPermission } from '../FirebaseConfig/FCMService';
 
 export default function RegisterScreen({navigation}) {
   const {colors, fonts, fontSizes} = useContext(ThemeContext);
@@ -42,7 +45,6 @@ export default function RegisterScreen({navigation}) {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    storage.set('phoneNumber', '+919380584233');
     Animated.timing(slideAnim, {
       toValue: -keyboardHeight / 7,
       duration: 350,
@@ -84,9 +86,9 @@ export default function RegisterScreen({navigation}) {
         return;
       }
       setSubmitting(true);
-      //const fcmToken = await requestNotificationPermission();
-      //const payload = {...values, fcmtoken: fcmToken};
-      const payload = {...values, fcmtoken: ''};
+      const fcmToken = await requestNotificationPermission();
+      const payload = {...values, fcmtoken: fcmToken};
+      //const payload = {...values, fcmtoken: ''};
       try {
         console.log('payload', payload);
         const response = await APIsPost(endPoints.registerUser, payload);
@@ -100,7 +102,7 @@ export default function RegisterScreen({navigation}) {
           console.log('response.data.data - ', response.data.data);
           storage.set('user_profile', JSON.stringify(response.data.data));
           Toast.show({type: 'success', text1: Strings.registrationSuccess});
-          navigation.replace('ProfileScreen2');
+          navigation.replace('Main');
           resetForm();
         } else {
           Toast.show({
@@ -112,8 +114,6 @@ export default function RegisterScreen({navigation}) {
       } catch (error) {
         // assume backend sent { message: "Validation failed", data: { field1: msg1, … }}
         console.log('err -> ', error);
-        //const fieldErrors = error.response?.data?.data;
-        //console.log('fieldErrors -> ',fieldErrors);
         if (error && typeof error === 'object') {
           // pass those directly into Formik’s errors
           setErrors(error);
@@ -135,22 +135,17 @@ export default function RegisterScreen({navigation}) {
   const genderOptions = ['female', 'male'];
 
   return (
-    <Animated.View
-      style={[
-        styles.container,
-        {
-          backgroundColor: colors.background,
-          transform: [{translateY: slideAnim}],
-        },
-      ]}>
-      <KeyboardAvoidingView
-        style={styles.flex}
-        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        //keyboardVerticalOffset={moderateScale(60)}
-      >
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={[styles.container, {backgroundColor: colors.background}]}>
+        <Animated.View
+          style={[styles.flex, {transform: [{translateY: slideAnim}]}]}>
+          <KeyboardAvoidingView
+            style={styles.flex}
+            behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            keyboardVerticalOffset={Platform.OS === 'ios' ? 60 : 20}
+            >
         <ScrollView
           contentContainerStyle={styles.inner}
-          //keyboardShouldPersistTaps="handled"
         >
           <Text
             style={[
@@ -244,9 +239,11 @@ export default function RegisterScreen({navigation}) {
                       key={opt}
                       style={[
                         styles.optionButton,
+                        {backgroundColor: colors.surface},
                         values.gender === opt && {
-                          borderColor: colors.primary,
-                          backgroundColor: `${colors.primary}20`,
+                          borderColor: colors.text,
+                          //backgroundColor: colors.primary,
+                          backgroundColor: `${colors.primary}50`,
                         },
                       ]}
                       onPress={() => setFieldValue('gender', opt)}>
@@ -354,6 +351,8 @@ export default function RegisterScreen({navigation}) {
         </ScrollView>
       </KeyboardAvoidingView>
     </Animated.View>
+    </View>
+    </TouchableWithoutFeedback>
   );
 }
 

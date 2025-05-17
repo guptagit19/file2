@@ -49,8 +49,9 @@ export default function DynamicBoxGrid({
   };
 
   return (
-    <View style={styles.wrapper}>
-      {/* <Text
+    <TouchableOpacity activeOpacity={0.7}>
+      <View style={styles.wrapper}>
+        {/* <Text
         style={[
           styles.legend,
           { backgroundColor: colors.surface, color: colors.text, fontFamily: fonts.medium, fontSize: fontSizes.medium },
@@ -59,102 +60,105 @@ export default function DynamicBoxGrid({
         {label}
       </Text> */}
 
-      <View
-        style={[
-          styles.container,
-          {borderColor: colors.border, backgroundColor: colors.surface},
-        ]}>
-        {/* Instruction Text */}
-        <Text
+        <View
           style={[
-            styles.instruction,
-            {
-              color: colors.text,
-              fontFamily: fonts.medium,
-              fontSize: fontSizes.medium,
-            },
+            styles.container,
+            {borderColor: colors.border, backgroundColor: colors.surface},
           ]}>
-          {InstruText}
-        </Text>
+          {/* Instruction Text */}
+          <Text
+            style={[
+              styles.instruction,
+              {
+                color: colors.text,
+                fontFamily: fonts.medium,
+                fontSize: fontSizes.medium,
+              },
+            ]}>
+            {InstruText}
+          </Text>
 
-        {values.map((val, idx) => {
-          const isEditing = editingIndex === idx;
-          const isFilled = !!val;
-          const longText = isFilled && val.length > 30;
-          const widthStyle = longText ? {width: '100%'} : {};
+          {values.map((val, idx) => {
+            const isEditing = editingIndex === idx;
+            const isFilled = !!val;
+            const longText = isFilled && val.length > 30;
+            const widthStyle = longText ? {width: '100%'} : {};
 
-          return (
-            <TouchableOpacity
-              key={idx}
-              activeOpacity={0.7}
-              style={[
-                styles.box,
-                widthStyle,
-                {
-                  backgroundColor: isFilled ? colors.lightSky : colors.disable,
-                  borderColor: colors.border,
-                },
+            return (
+              <TouchableOpacity
+                key={idx}
+                activeOpacity={0.7}
+                style={[
+                  styles.box,
+                  widthStyle,
+                  {
+                    backgroundColor: isFilled
+                      ? colors.lightSky
+                      : colors.disable,
+                    borderColor: colors.border,
+                  },
 
-                isFilled && {
-                  backgroundColor: colors.lightSky,
-                  borderStyle: 'solid',
-                  borderColor: colors.border,
-                  ...Platform.select({
-                    ios: {
-                      shadowColor: colors.shadow || '#000',
-                      shadowOffset: {width: 0, height: moderateScale(1)},
-                      shadowOpacity: 0.1,
-                      shadowRadius: moderateScale(2),
-                    },
-                    android: {elevation: 2},
-                  }),
-                },
-              ]}
-              onPress={() => setEditingIndex(idx)}>
-              {isEditing ? (
-                <TextInput
-                  style={[
-                    styles.input,
-                    {
-                      color: !colors.text,
-                      fontFamily: fonts.regular,
-                      fontSize: fontSizes.medium,
-                    },
-                  ]}
-                  value={val}
-                  onChangeText={text => handleTextChange(text.trim(), idx)}
-                  onBlur={finishEditing}
-                  autoFocus
-                  placeholder="Enter"
-                  placeholderTextColor={colors.disable}
-                />
-              ) : isFilled ? (
-                <Text
-                  style={[
-                    styles.hintText,
-                    {
-                      color: isFilled ? '#000000' : colors.text,
-                      fontWeight: FontWeights.bold,
-                      fontFamily: fonts.bold,
-                      fontSize: fontSizes.medium,
-                    },
-                  ]}
-                  numberOfLines={1}
-                  ellipsizeMode="tail">
-                  {val.trim()}
-                </Text>
-              ) : (
-                <MaterialCommunityIcons
-                  name="plus"
-                  size={moderateScale(24)}
-                  color={colors.text}
-                />
-              )}
-            </TouchableOpacity>
-          );
-        })}
+                  isFilled && {
+                    backgroundColor: colors.lightSky,
+                    borderStyle: 'solid',
+                    borderColor: colors.border,
+                    ...Platform.select({
+                      ios: {
+                        shadowColor: colors.shadow || '#000',
+                        shadowOffset: {width: 0, height: moderateScale(1)},
+                        shadowOpacity: 0.1,
+                        shadowRadius: moderateScale(2),
+                      },
+                      android: {elevation: 2},
+                    }),
+                  },
+                ]}
+                onPress={() => setEditingIndex(idx)}>
+                {isEditing ? (
+                  <TextInput
+                    style={[
+                      styles.input,
+                      {
+                        color: !colors.text,
+                        fontFamily: fonts.regular,
+                        fontSize: fontSizes.medium,
+                      },
+                    ]}
+                    value={val}
+                    onChangeText={text => handleTextChange(text.trim(), idx)}
+                    onBlur={finishEditing}
+                    autoFocus
+                    placeholder="Enter"
+                    placeholderTextColor={colors.disable}
+                  />
+                ) : isFilled ? (
+                  <Text
+                    style={[
+                      styles.hintText,
+                      {
+                        color: isFilled ? '#000000' : colors.text,
+                        fontWeight: FontWeights.bold,
+                        fontFamily: fonts.bold,
+                        fontSize: fontSizes.medium,
+                      },
+                    ]}
+                    numberOfLines={1}
+                    ellipsizeMode="tail">
+                    {val.trim()}
+                  </Text>
+                ) : (
+                  <MaterialCommunityIcons
+                    name="plus"
+                    size={moderateScale(24)}
+                    color={colors.text}
+                  />
+                )}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 }
 

@@ -1,4 +1,4 @@
-import React, {useState, useContext} from 'react';
+import React, {useState} from 'react';
 import {
   View,
   Text,
@@ -8,21 +8,20 @@ import {
   Platform,
   StyleSheet,
   ScrollView,
+  useWindowDimensions,
 } from 'react-native';
-import { ThemeContext } from '../../contexts/ThemeContext';
-import { moderateScale, verticalScale } from '../../constants/metrics';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import {launchImageLibrary} from 'react-native-image-picker';
 import Icon from 'react-native-vector-icons/Ionicons';
-
-// Dependencies:
-// npm install react-native-permissions react-native-image-picker react-native-vector-icons
+import { ThemeContext } from '../../contexts/ThemeContext';
+import {moderateScale, verticalScale} from '../../constants/metrics';
 
 const MAX_PHOTOS = 5;
 
 export default function PhotoPicker() {
-  const {colors, fonts, fontSizes} = useContext(ThemeContext);
+  const { colors, fonts, fontSizes } = React.useContext(ThemeContext);
   const [photos, setPhotos] = useState([]);
+  const { width } = useWindowDimensions();
 
   const getPermission = async () => {
     const permissionType =
@@ -32,110 +31,60 @@ export default function PhotoPicker() {
 
     const result = await check(permissionType);
     if (result === RESULTS.GRANTED) return true;
-
-    if (result === RESULTS.DENIED || result === RESULTS.LIMITED) {
-      const requestResult = await request(permissionType);
-      return requestResult === RESULTS.GRANTED;
-    }
-
-    Alert.alert('Permission Denied', 'Cannot access photo library');
-    return false;
+    const requestResult = await request(permissionType);
+    return requestResult === RESULTS.GRANTED;
   };
 
   const handleAddPhoto = async () => {
-    const granted = await getPermission();
-    if (!granted) return;
-
-    launchImageLibrary({mediaType: 'photo'}, response => {
+    if (!(await getPermission())) {
+      Alert.alert('Permission required', 'App needs photo library access');
+      return;
+    }
+    launchImageLibrary({ mediaType: 'photo', selectionLimit: 1 }, response => {
       if (response.didCancel || response.errorCode) return;
-      const uri = response.assets[0]?.uri;
-      if (!uri) return;
-      if (photos.length < MAX_PHOTOS) {
-        setPhotos(prev => [...prev, uri]);
-      } else {
-        Alert.alert(
-          'Limit Reached',
-          `You can only add up to ${MAX_PHOTOS} photos.`,
-        );
-      }
+      const uri = response.assets[0].uri;
+      setPhotos(prev => prev.length < MAX_PHOTOS ? [...prev, uri] : prev);
     });
   };
 
-  const handleDeletePhoto = index => {
+  const handleDelete = index => {
     setPhotos(prev => prev.filter((_, i) => i !== index));
   };
 
-  const renderSlot = (uri, index) => (
-    <View
-      key={index}
-      style={[
-        styles.photoBox,
-        {
-          borderColor: colors.border,
-          backgroundColor: colors.surface,
-          width: moderateScale(80),
-          height: moderateScale(80),
-        },
-      ]}>
-      <Image source={{uri}} style={styles.imageStyle} />
-      <TouchableOpacity
-        style={[
-          styles.deleteIcon,
-          {
-            backgroundColor: colors.error,
-            top: moderateScale(-6),
-            right: moderateScale(-6),
-          },
-        ]}
-        onPress={() => handleDeletePhoto(index)}>
-        <Icon
-          name="close-circle"
-          size={moderateScale(18)}
-          color={colors.background}
-        />
-      </TouchableOpacity>
-    </View>
-  );
-
-  const renderAddSlot = idx => (
-    <TouchableOpacity
-      key={`add-${idx}`}
-      style={[
-        styles.addBox,
-        {
-          borderColor: colors.border,
-          width: moderateScale(80),
-          height: moderateScale(80),
-        },
-      ]}
-      onPress={handleAddPhoto}>
-      <Icon name="add" size={moderateScale(30)} color={colors.text} />
-    </TouchableOpacity>
-  );
+  // grid item size dynamic
+  const boxSize = moderateScale((width - moderateScale(40)) / 3.7);
 
   return (
-    <View style={[styles.container, {borderColor: colors.border}]}>
+    <View style={[styles.container, { backgroundColor: colors.surface }]}>      
       <Text
         style={[
-          styles.label,
-          {
-            color: colors.text,
-            fontFamily: fonts.medium,
-            fontSize: fontSizes.medium,
-          },
+          styles.title,
+          { color: colors.text, fontFamily: fonts.medium, fontSize: fontSizes.medium },
         ]}>
-        Please add up to {MAX_PHOTOS} photos
+        Please add the Gebili Images
       </Text>
       <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.gridContainer}>
-        {[
-          ...photos.map(renderSlot),
-          ...Array(MAX_PHOTOS - photos.length)
-            .fill()
-            .map((_, i) => renderAddSlot(i)),
-        ]}
+        contentContainerStyle={styles.grid}
+        nestedScrollEnabled
+      >
+        {photos.map((uri, idx) => (
+          <View key={idx} style={[styles.box, { width: boxSize, height: boxSize }]}>            
+            <Image source={{ uri }} style={styles.image} />
+            <TouchableOpacity
+              style={styles.delete}
+              onPress={() => handleDelete(idx)}>
+              <Icon name="close-circle" size={moderateScale(18)} color={colors.error} />
+            </TouchableOpacity>
+          </View>
+        ))}
+        {Array.from({ length: MAX_PHOTOS - photos.length }).map((_, idx) => (
+          <TouchableOpacity
+            key={idx}
+            style={[styles.add, {backgroundColor:colors.disable, width: boxSize, height: boxSize, borderColor: colors.border }]}
+            onPress={handleAddPhoto}>
+            <Icon name="add" size={moderateScale(32)} color={colors.primary} />
+          </TouchableOpacity>
+        ))}
       </ScrollView>
     </View>
   );
@@ -144,40 +93,38 @@ export default function PhotoPicker() {
 const styles = StyleSheet.create({
   container: {
     marginVertical: verticalScale(10),
-    padding: moderateScale(12),
-    borderWidth: StyleSheet.hairlineWidth,
+    padding: moderateScale(10),
     borderRadius: moderateScale(10),
   },
-  label: {
+  title: {
     textAlign: 'center',
     marginBottom: verticalScale(8),
-    textDecorationLine: 'underline',
   },
-  gridContainer: {
+  grid: {
     flexDirection: 'row',
-    alignItems: 'center',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
   },
-  photoBox: {
-    marginRight: moderateScale(10),
-    borderWidth: moderateScale(1),
+  box: {
+    margin: moderateScale(5),
     borderRadius: moderateScale(8),
     overflow: 'hidden',
   },
-  addBox: {
-    marginRight: moderateScale(10),
-    borderWidth: moderateScale(1),
-    borderRadius: moderateScale(8),
-    justifyContent: 'center',
-    alignItems: 'center',
-    borderStyle: 'dashed',
-  },
-  imageStyle: {
+  image: {
     width: '100%',
     height: '100%',
   },
-  deleteIcon: {
+  delete: {
     position: 'absolute',
-    padding: moderateScale(2),
-    borderRadius: moderateScale(10),
+    top: moderateScale(4),
+    right: moderateScale(4),
+  },
+  add: {
+    margin: moderateScale(5),
+    borderWidth: moderateScale(1),
+    borderStyle: 'dashed',
+    borderRadius: moderateScale(8),
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });

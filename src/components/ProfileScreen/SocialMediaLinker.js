@@ -1,3 +1,4 @@
+/* eslint-disable curly */
 /* eslint-disable react-native/no-inline-styles */
 // src/components/ui/SocialMediaLinker.js
 import React, {useState, useEffect, useContext, useRef} from 'react';
@@ -16,6 +17,7 @@ import {ThemeContext} from '../../contexts/ThemeContext';
 import {ConnectivityContext} from '../../contexts/ConnectivityContext';
 import {moderateScale, verticalScale} from '../../constants/metrics';
 import {FontWeights} from '../../constants/fonts';
+import {Checkbox} from 'react-native-paper';
 
 const platforms = [
   {name: 'Instagram', icon: 'instagram'},
@@ -32,7 +34,14 @@ const platforms = [
  * - value: object mapping platform names to links (controlled)
  * - onChange: callback(updatedLinks) when links change
  */
-export default function SocialMediaLinker({value = {}, onChange}) {
+export default function SocialMediaLinker({
+  value = {},
+  titleText,
+  screen,
+  onChange,
+  selected = {}, // for checklist mode
+  onToggle = () => {}, // for checklist mode
+}) {
   const {colors, fonts, fontSizes} = useContext(ThemeContext);
   const {isConnected} = useContext(ConnectivityContext);
   const [links, setLinks] = useState(value);
@@ -97,13 +106,93 @@ export default function SocialMediaLinker({value = {}, onChange}) {
             fontSize: fontSizes.large,
           },
         ]}>
-        Link your Social Media Profiles
+        {titleText}
       </Text>
+
       <View style={styles.boxContainer}>
         {platforms.map((platformObj, idx) => {
           const {name, icon} = platformObj;
           const isEdit = editingPlatform === name;
-          const hasLink = !!links[name];
+          const hasLink = Boolean(links[name]);
+          const isChecked = Boolean(selected?.[name]);
+          // Checklist mode (e.g. on DatingScreen)
+          if (screen !== 'ProfileScreen') {
+            return (
+              <Animated.View
+                key={name}
+                style={{transform: [{scale: scales[idx]}]}}>
+                <TouchableOpacity
+                  activeOpacity={hasLink ? 0.7 : 1}
+                  disabled={!hasLink}
+                  onPress={() => hasLink && onToggle(name, !isChecked)}
+                  style={[
+                    styles.boxforNoNProfile, // your existing style
+                    {
+                      borderColor: colors.border,
+                      borderStyle: hasLink ? 'solid' : 'dashed',
+                      backgroundColor: hasLink
+                        ? isChecked
+                          ? colors.lightSky
+                          : colors.surface
+                        : 'transparent',
+                      ...Platform.select({
+                        ios: {
+                          shadowColor: colors.shadow,
+                          shadowOffset: {width: 0, height: moderateScale(2)},
+                          shadowOpacity: hasLink ? 0.2 : 0,
+                          shadowRadius: moderateScale(4),
+                        },
+                        android: {elevation: hasLink ? 3 : 0},
+                      }),
+                    },
+                  ]}>
+                  <View style={styles.checkRow}>
+                    {hasLink && (
+                      <Checkbox
+                        status={isChecked ? 'checked' : 'unchecked'}
+                        onPress={() => onToggle(name, !isChecked)}
+                        color={colors.primary}
+                        uncheckedColor={colors.text}
+                      />
+                    )}
+                    <MaterialCommunityIcons
+                      name={icon}
+                      size={moderateScale(18)}
+                      color={hasLink ? colors.primary : colors.teal}
+                      style={{marginRight: moderateScale(6)}}
+                    />
+                    <Text
+                      style={[
+                        styles.text,
+                        {
+                          //color: hasLink ? colors.text : colors.disable,
+                          color: hasLink
+                            ? isChecked
+                              ? !colors.backgroundColor
+                              : colors.text
+                            : colors.disable,
+                          fontFamily: fonts.medium,
+                          fontSize: fontSizes.small,
+                        },
+                      ]}
+                      numberOfLines={1}
+                      ellipsizeMode="tail">
+                      {name}
+                    </Text>
+                    {hasLink && (
+                      <MaterialCommunityIcons
+                        name="check-circle"
+                        size={moderateScale(16)}
+                        color={colors.goodThumbsColor}
+                        style={{marginLeft: moderateScale(6)}}
+                      />
+                    )}
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            );
+          }
+
           return (
             <Animated.View
               key={name}
@@ -164,8 +253,8 @@ export default function SocialMediaLinker({value = {}, onChange}) {
                       style={[
                         styles.text,
                         {
-                         // color: colors.text,
-                          color : hasLink ? '#000000' : colors.text,
+                          // color: colors.text,
+                          color: hasLink ? '#000000' : colors.text,
                           fontWeight: FontWeights.bold,
                           fontFamily: fonts.medium,
                           fontSize: fontSizes.small,
@@ -206,6 +295,7 @@ const styles = StyleSheet.create({
     marginBottom: verticalScale(8),
     textDecorationLine: 'underline',
   },
+
   boxContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -215,6 +305,17 @@ const styles = StyleSheet.create({
     margin: moderateScale(4),
     paddingHorizontal: moderateScale(12),
     paddingVertical: moderateScale(8),
+    borderRadius: moderateScale(20),
+    borderWidth: moderateScale(1),
+    justifyContent: 'center',
+    alignItems: 'center',
+    // backgroundColor: 'transparent',
+  },
+  boxforNoNProfile: {
+    minHeight: verticalScale(30),
+    margin: moderateScale(4),
+    paddingHorizontal: moderateScale(5),
+    paddingVertical: moderateScale(3),
     borderRadius: moderateScale(20),
     borderWidth: moderateScale(1),
     justifyContent: 'center',
@@ -233,5 +334,10 @@ const styles = StyleSheet.create({
     flexShrink: 1,
     padding: 0,
     textAlign: 'left',
+  },
+  // for checklist layout
+  checkRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
 });

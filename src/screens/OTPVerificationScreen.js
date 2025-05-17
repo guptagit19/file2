@@ -137,7 +137,7 @@ export default function OTPVerificationScreen({navigation}) {
         });
         if (status === 200 && data.message === 'User Found' && data.bluValue) {
           storage.set('user_profile', JSON.stringify(data.data));
-          navigation.replace('ProfileScreen2');
+          navigation.replace('Main');
         } else {
           navigation.replace('RegisterScreen');
         }
