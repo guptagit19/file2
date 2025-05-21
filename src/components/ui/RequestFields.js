@@ -1,3 +1,4 @@
+/* eslint-disable curly */
 // src/components/ui/RequestFields.js
 import React, {useState, useContext} from 'react';
 import {View, Text, TouchableOpacity, StyleSheet, Platform} from 'react-native';

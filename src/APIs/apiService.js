@@ -11,6 +11,7 @@ export const endPoints = {
   getUserProfile: '/user/getUserProfile',
   updateUser: '/user/updateUser',
   saveUserLocation: '/location/saveUserLocation',
+  //saveUserLocation: phone => `/location/${phone}/saveUserLocation`,
 };
 
 const api = axios.create({

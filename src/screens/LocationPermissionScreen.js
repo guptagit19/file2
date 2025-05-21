@@ -3,145 +3,100 @@ import React, {useContext, useState} from 'react';
 import {
   View,
   Text,
-  Button,
+  TouchableOpacity,
   ActivityIndicator,
-  Alert,
-  Platform,
   StyleSheet,
-  Linking,
+  Platform,
+  Image,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
-import axios from 'axios';
-import {
-  check,
-  request,
-  PERMISSIONS,
-  RESULTS,
-  openSettings,
-} from 'react-native-permissions';
-
-import {ConnectivityContext} from '../contexts/ConnectivityContext';
-import {ThemeContext} from '../contexts/ThemeContext';
-import {storage} from '../contexts/storagesMMKV';
-import {API_BASE_URL, endPoints} from '../APIs/apiService';
-//import {APIsGet, APIsPost, endPoints} from '../APIs/apiService';
+import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
 import Toast from 'react-native-toast-message';
+import {ThemeContext} from '../contexts/ThemeContext';
+import {ConnectivityContext} from '../contexts/ConnectivityContext';
+import {moderateScale, verticalScale} from '../constants/metrics';
+import {APIsGet, APIsPost, endPoints, API_BASE_URL} from '../APIs/apiService';
+import {storage} from '../contexts/storagesMMKV';
+
+// Only load on Android
+let RNAndroidLocationEnabler = null;
+if (Platform.OS === 'android') {
+  RNAndroidLocationEnabler =
+    require('react-native-android-location-enabler').default;
+}
+
 export default function LocationPermissionScreen({navigation}) {
+  const {colors, fonts, fontSizes} = useContext(ThemeContext);
   const {isConnected} = useContext(ConnectivityContext);
-  const {colors} = useContext(ThemeContext);
   const [loading, setLoading] = useState(false);
 
-  const askPermissionAndSend = async () => {
+  const askPermissionAndFetch = async () => {
     if (!isConnected) {
-      return Alert.alert('No internet', 'Please connect and try again.');
+      return Toast.show({
+        type: 'error',
+        text1: 'No Internet',
+        text2: 'Please connect and try again.',
+      });
     }
-
     setLoading(true);
+
     try {
-      // 1️⃣ Check & request permissions
+      // 1️⃣ request runtime permissions
       const perms = Platform.select({
-        ios: [
-          PERMISSIONS.IOS.LOCATION_WHEN_IN_USE,
-          PERMISSIONS.IOS.LOCATION_ALWAYS,
-        ],
-        android: [
-          PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION,
-          PERMISSIONS.ANDROID.ACCESS_COARSE_LOCATION,
-        ],
+        ios: [PERMISSIONS.IOS.LOCATION_WHEN_IN_USE],
+        android: [PERMISSIONS.ANDROID.ACCESS_FINE_LOCATION],
       });
 
-      for (const perm of perms) {
+      for (let perm of perms) {
         let status = await check(perm);
-        if (status === RESULTS.DENIED || status === RESULTS.LIMITED) {
-          status = await request(perm);
-        }
-        if (status === RESULTS.BLOCKED) {
-          Alert.alert(
-            'Permission blocked',
-            'Enable location in settings to continue.',
-            [{text: 'Open Settings', onPress: openSettings}],
-          );
-          setLoading(false);
-          return;
-        }
+        if (status === RESULTS.DENIED) status = await request(perm);
         if (status !== RESULTS.GRANTED) {
-          Alert.alert('Permission denied', 'Location is required.');
-          setLoading(false);
-          return;
+          throw new Error('Location permission denied');
         }
       }
 
-      // 2️⃣ Ensure device location services are ON
-      const gpsAvailable = await new Promise(resolve => {
-        Geolocation.getCurrentPosition(
-          () => resolve(true),
-          () => resolve(false),
-          {timeout: 5000},
-        );
-      });
-      if (!gpsAvailable) {
-        Alert.alert(
-          'Location services off',
-          'Please turn on device location services.',
-          [{text: 'Open Settings', onPress: () => Linking.openSettings()}],
-        );
-        setLoading(false);
-        return;
+      // 2️⃣ on Android, ensure GPS is turned ON
+      if (Platform.OS === 'android' && RNAndroidLocationEnabler) {
+        await RNAndroidLocationEnabler.promptForEnableLocationIfNeeded({
+          interval: 10000,
+          fastInterval: 5000,
+        });
       }
 
-      // 3️⃣ Fetch precise coordinates
+      // 3️⃣ get coordinates
       // Geolocation.getCurrentPosition(
       //   async ({coords}) => {
       //     const {latitude, longitude} = coords;
-      //     console.log('latitude', latitude);
-      //     console.log('longitude', longitude);
-      //     try {
-      //       // 1️⃣ Reverse-geocode via your axios instance
-      //       const {data: nomRes} = await APIsGet(
-      //         'https://nominatim.openstreetmap.org/reverse',
-      //         {
-      //           lat: latitude,
-      //           lon: longitude,
-      //           format: 'json',
-      //           addressdetails: 1,
-      //         },
-      //       );
 
-      //       const addr = nomRes.address || {};
-      //       const phoneNumber = storage.getString('phoneNumber');
-      //       const payload = {
-      //         latitude,
-      //         longitude,
-      //         country: addr.country,
-      //         state: addr.state || addr.county,
-      //         city: addr.city || addr.town || addr.village,
-      //         postalCode: addr.postcode,
-      //         place: nomRes.display_name,
-      //       };
+      //     // 4️⃣ reverse-geocode
+      //     const {data: nomRes} = await APIsGet(
+      //       'https://nominatim.openstreetmap.org/reverse',
+      //       {lat: latitude, lon: longitude, format: 'json', addressdetails: 1},
+      //     );
+      //     const addr = nomRes.address || {};
+      //     const payload = {
+      //       latitude,
+      //       longitude,
+      //       country: addr.country,
+      //       state: addr.state || addr.county,
+      //       city: addr.city || addr.town || addr.village,
+      //       postalCode: addr.postcode,
+      //       place: nomRes.display_name,
+      //     };
 
-      //       // 2️⃣ Send to backend via your wrapper
-      //       await APIsPost(
-      //         `${endPoints.saveUserLocation}/${phoneNumber}`,
-      //         payload,
-      //       );
+      //     // 5️⃣ send to backend
+      //     const phone = storage.getString('phoneNumber');
+      //     await APIsPost(endPoints.saveUserLocation(phone), payload);
 
-      //       Toast.show({type: 'success', text1: 'Location saved!'});
-      //       navigation.replace('MainNavPage');
-      //     } catch (err) {
-      //       // will use your ToastConfig to show error
-      //       Toast.show({
-      //         type: 'error',
-      //         text1: 'Error saving location',
-      //         text2: err.message,
-      //       });
-      //       setLoading(false);
-      //     }
+      //     Toast.show({type: 'success', text1: 'Location saved!'});
+      //     navigation.replace('Main');
       //   },
       //   error => {
+      //     console.warn(error);
       //     Toast.show({type: 'error', text1: 'GPS error', text2: error.message});
       //     setLoading(false);
       //   },
-      //   {enableHighAccuracy: true, timeout: 15000, maximumAge: 10000},
+      //   {enableHighAccuracy: true, timeout: 15000, maximumAge: 0},
       // );
 
       Geolocation.getCurrentPosition(
@@ -209,32 +164,58 @@ export default function LocationPermissionScreen({navigation}) {
         },
       );
     } catch (err) {
-      console.warn(err);
-      Alert.alert('Error', 'Failed to fetch or save location.');
+      Toast.show({type: 'error', text1: 'Error', text2: err.message});
       setLoading(false);
     }
   };
 
   return (
     <View style={[styles.container, {backgroundColor: colors.background}]}>
-      <Text style={[styles.text, {color: colors.text, marginBottom: 20}]}>
-        We need your location to show nearby profiles.
-      </Text>
-
-      <Button
-        title={loading ? 'Please wait…' : 'Enable Location'}
-        onPress={askPermissionAndSend}
-        color={colors.primary}
-        disabled={loading}
+      <Image
+        source={require('../assets/logo.png')}
+        style={styles.illustration}
+        resizeMode="contain"
       />
 
-      {loading && (
-        <ActivityIndicator
-          style={{marginTop: 20}}
-          size="small"
-          color={colors.primary}
-        />
-      )}
+      <Text
+        style={[
+          styles.title,
+          {
+            color: colors.text,
+            fontFamily: fonts.bold,
+            fontSize: fontSizes.xlarge,
+          },
+        ]}>
+        Can we get your location, please?
+      </Text>
+      <Text
+        style={[
+          styles.subtitle,
+          {
+            color: colors.text,
+            fontFamily: fonts.regular,
+            fontSize: fontSizes.small,
+          },
+        ]}>
+        We need it so we can show you great people nearby (or far away).
+      </Text>
+
+      <TouchableOpacity
+        style={[
+          styles.button,
+          {backgroundColor: colors.primary},
+          loading && {opacity: 0.6},
+        ]}
+        onPress={askPermissionAndFetch}
+        disabled={loading}>
+        {loading ? (
+          <ActivityIndicator color={colors.surface} size={30}/>
+        ) : (
+          <Text style={[styles.buttonText, {fontFamily: fonts.medium}]}>
+            Enable Location
+          </Text>
+        )}
+      </TouchableOpacity>
     </View>
   );
 }
@@ -242,12 +223,32 @@ export default function LocationPermissionScreen({navigation}) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    alignItems: 'center',
+    paddingHorizontal: moderateScale(20),
     justifyContent: 'center',
-    padding: 16,
+    alignItems: 'center',
   },
-  text: {
-    fontSize: 16,
+  illustration: {
+    width: '60%',
+    height: verticalScale(200),
+    marginBottom: verticalScale(20),
+  },
+  title: {
     textAlign: 'center',
+    marginBottom: verticalScale(8),
+  },
+  subtitle: {
+    textAlign: 'center',
+    marginBottom: verticalScale(24),
+    paddingHorizontal: moderateScale(10),
+  },
+  button: {
+    width: '100%',
+    paddingVertical: moderateScale(14),
+    borderRadius: moderateScale(8),
+    alignItems: 'center',
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: moderateScale(16),
   },
 });
