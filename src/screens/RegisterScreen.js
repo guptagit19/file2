@@ -102,7 +102,8 @@ export default function RegisterScreen({navigation}) {
           console.log('response.data.data - ', response.data.data);
           storage.set('user_profile', JSON.stringify(response.data.data));
           Toast.show({type: 'success', text1: Strings.registrationSuccess});
-          navigation.replace('Main');
+          navigation.replace('LocationPermissionScreen');
+          //navigation.replace('MainNavPage');
           resetForm();
         } else {
           Toast.show({

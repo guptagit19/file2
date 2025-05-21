@@ -42,7 +42,8 @@ const SplashScreen = () => {
     })().finally(() => {
       setTimeout(() => {
         if (isRegistered) {
-          navigation.replace('Main');
+          navigation.replace('LocationPermissionScreen');
+          //navigation.replace('MainNavPage');
         } else {
           navigation.replace('LoginScreen');
         }

@@ -5,11 +5,9 @@ import React, {useContext} from 'react';
 import {View, Text, StyleSheet} from 'react-native';
 import {createMaterialTopTabNavigator} from '@react-navigation/material-top-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
-
 import {moderateScale} from '../constants/metrics';
 import {ThemeContext} from '../contexts/ThemeContext';
 import {Strings} from '../constants/strings';
-
 import DatingScreen from '../screens/DatingScreen';
 import CommunityScreen from '../screens/CommunityScreen';
 import LifePartnerScreen from '../screens/LifePartnerScreen';
