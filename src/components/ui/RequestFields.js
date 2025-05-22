@@ -1,7 +1,7 @@
 /* eslint-disable curly */
 // src/components/ui/RequestFields.js
 import React, {useState, useContext} from 'react';
-import {View, Text, TouchableOpacity, StyleSheet, Platform} from 'react-native';
+import {View, Text, TouchableOpacity, StyleSheet, Platform, Alert} from 'react-native';
 import {TextInput, Checkbox} from 'react-native-paper';
 import Icon from 'react-native-vector-icons/Ionicons';
 import DateTimePicker, {
@@ -82,6 +82,10 @@ export default function RequestFields({minDate, maxDate}) {
             maxDate,
           ).format('LLL')}`,
         });
+
+        Alert.alert('error',`Select between ${moment(minDate).format('LLL')} and ${moment(
+            maxDate,
+          ).format('LLL')}`);
         setFieldValue('meetupTime', null);
       }
       setTempDate(null);

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React, {
   useState,
   useCallback,
@@ -17,6 +18,7 @@ import {
   Animated,
   TouchableWithoutFeedback,
   Keyboard,
+  Alert,
 } from 'react-native';
 import {Formik} from 'formik';
 import * as Yup from 'yup';
@@ -37,7 +39,7 @@ import {Checkbox} from 'react-native-paper';
 export default function DatingScreen() {
   const {isConnected} = useContext(ConnectivityContext);
   const {colors, fonts, fontSizes} = useContext(ThemeContext);
-
+  const formRef = useRef(null);
   const [profile, setProfile] = useState({socialMedia: {}});
   const [selectedSM, setSelectedSM] = useState({});
   const [blindDate, setBlindDate] = useState(false);
@@ -75,6 +77,7 @@ export default function DatingScreen() {
   const onRefresh = useCallback(() => {
     setRefreshing(true);
     loadProfile();
+    formRef.current?.resetForm();
     setRefreshing(false);
   }, [loadProfile]);
 
@@ -111,6 +114,7 @@ export default function DatingScreen() {
         text1: 'Submission',
         text2: JSON.stringify(data, null, 2),
       });
+      Alert.alert('Data', JSON.stringify(data, null, 2));
     },
     [blindDate, selectedSM],
   );
@@ -221,9 +225,10 @@ export default function DatingScreen() {
               meetupTime: null,
               termsAccepted: false,
             }}
+            innerRef={formRef}
             validationSchema={schema}
             onSubmit={onSubmit}>
-            {({handleSubmit, setFieldValue, errors, touched}) => (
+            {({handleSubmit, setFieldValue, errors, touched, resetForm}) => (
               <>
                 <RequestFields
                   minDate={minDate}
