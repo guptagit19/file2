@@ -1,3 +1,4 @@
+/* eslint-disable curly */
 // src/screens/LocationPermissionScreen.js
 import React, {useContext, useState} from 'react';
 import {
@@ -8,6 +9,7 @@ import {
   StyleSheet,
   Platform,
   Image,
+  Alert,
 } from 'react-native';
 import Geolocation from '@react-native-community/geolocation';
 import {check, request, PERMISSIONS, RESULTS} from 'react-native-permissions';
@@ -153,6 +155,7 @@ export default function LocationPermissionScreen({navigation}) {
               },
             );
             console.log('✅ Backend status:', backendResp.status);
+            console.log('✅ Backend status:', backendResp);
             Toast.show({type: 'success', text1: 'Location saved!'});
             navigation.replace('MainNavPage');
           } catch (err) {

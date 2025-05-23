@@ -18,6 +18,8 @@ import OTPVerificationScreen from './src/screens/OTPVerificationScreen';
 import RegisterScreen from './src/screens/RegisterScreen';
 import ProfileScreen2 from './src/screens/ProfileScreen2';
 import LocationPermissionScreen from './src/screens/LocationPermissionScreen';
+import {GlobalAlertProvider} from './src/contexts/GlobalAlertContext';
+//import { GlobalAlertProvider } from './src/contexts/GlobalAlertProvider';
 const Stack = createNativeStackNavigator();
 
 export default function App() {
@@ -25,42 +27,47 @@ export default function App() {
     <ErrorBoundary>
       <ConnectivityProvider>
         <ThemeProvider>
-          <SafeAreaView
-            style={{
-              flex: 1,
-              paddingTop:
-                Platform.OS === 'android' ? StatusBar.currentHeight : 0,
-            }}>
-            <NavigationContainer>
-              <Stack.Navigator
-                initialRouteName="Splash"
-                screenOptions={{headerShown: false}}>
-                <Stack.Screen name="Splash" component={SplashScreen} />
-                <Stack.Screen name="Home" component={HomeScreen} />
-                <Stack.Screen name="LoginScreen" component={LoginScreen} />
-                <Stack.Screen
-                  name="OTPVerificationScreen"
-                  component={OTPVerificationScreen}
-                />
-                <Stack.Screen
-                  name="RegisterScreen"
-                  component={RegisterScreen}
-                />
-                <Stack.Screen
-                  name="ProfileScreen2"
-                  component={ProfileScreen2}
-                />
-                <Stack.Screen name="LocationPermissionScreen" component={LocationPermissionScreen} />
-                <Stack.Screen name="MainNavPage" component={TabNavigator} />
-              </Stack.Navigator>
-            </NavigationContainer>
-            <Toast
-              config={toastConfig}
-              position="top"
-              visibilityTime={4000}
-              topOffset={60}
-            />
-          </SafeAreaView>
+          <GlobalAlertProvider>
+            <SafeAreaView
+              style={{
+                flex: 1,
+                paddingTop:
+                  Platform.OS === 'android' ? StatusBar.currentHeight : 0,
+              }}>
+              <NavigationContainer>
+                <Stack.Navigator
+                  initialRouteName="Splash"
+                  screenOptions={{headerShown: false}}>
+                  <Stack.Screen name="Splash" component={SplashScreen} />
+                  <Stack.Screen name="Home" component={HomeScreen} />
+                  <Stack.Screen name="LoginScreen" component={LoginScreen} />
+                  <Stack.Screen
+                    name="OTPVerificationScreen"
+                    component={OTPVerificationScreen}
+                  />
+                  <Stack.Screen
+                    name="RegisterScreen"
+                    component={RegisterScreen}
+                  />
+                  <Stack.Screen
+                    name="ProfileScreen2"
+                    component={ProfileScreen2}
+                  />
+                  <Stack.Screen
+                    name="LocationPermissionScreen"
+                    component={LocationPermissionScreen}
+                  />
+                  <Stack.Screen name="MainNavPage" component={TabNavigator} />
+                </Stack.Navigator>
+              </NavigationContainer>
+              <Toast
+                config={toastConfig}
+                position="top"
+                visibilityTime={4000}
+                topOffset={60}
+              />
+            </SafeAreaView>
+          </GlobalAlertProvider>
         </ThemeProvider>
       </ConnectivityProvider>
     </ErrorBoundary>

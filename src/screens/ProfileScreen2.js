@@ -46,15 +46,6 @@ export default function ProfileScreen2() {
   // Animated value for sliding
   const slideAnim = useRef(new Animated.Value(0)).current;
 
-  // Animate up/down when keyboard opens/closes
-  // useEffect(() => {
-  //   Animated.timing(slideAnim, {
-  //     toValue: keyboardHeight > 0 ? -keyboardHeight / 1 : 0,
-  //     duration: 500,
-  //     useNativeDriver: true,
-  //   }).start();
-  // }, [keyboardHeight, slideAnim]);
-
   useEffect(() => {
     // Slide up when keyboard shows
     Animated.timing(slideAnim, {

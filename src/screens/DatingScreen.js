@@ -35,6 +35,9 @@ import SocialMediaLinker from '../components/ProfileScreen/SocialMediaLinker';
 import {moderateScale, verticalScale} from '../constants/metrics';
 import {storage} from '../contexts/storagesMMKV';
 import {Checkbox} from 'react-native-paper';
+import {useGlobalAlert} from '../contexts/GlobalAlertContext';
+import GlobalAlertBanner from '../components/Global/GlobalAlertBanner';
+import {APIsGet, endPoints} from '../APIs/apiService';
 
 export default function DatingScreen() {
   const {isConnected} = useContext(ConnectivityContext);
@@ -44,17 +47,49 @@ export default function DatingScreen() {
   const [selectedSM, setSelectedSM] = useState({});
   const [blindDate, setBlindDate] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-
+  const {showAlert} = useGlobalAlert();
+  const [activeSubscription, setActiveSubscription] = useState(false);
+  const [subscriptionName, setSubscriptionName] = useState(false);
   // load profile & initialize
+
+  async function fetchData() {
+    try {
+      //console.log('phoneNumber ', storage.getString('phoneNumber'));
+      const {status, data} = await APIsGet(endPoints.checkPhone, {
+        phoneNumber: storage.getString('phoneNumber'),
+      });
+      //console.log('status', status, ' data -> ', data);
+      if (status === 200 && data.message === 'User Found' && data.bluValue) {
+        //setProfile(data.data);
+        storage.set('user_profile', JSON.stringify(data.data));
+        //console.log('user_profile -> ', storage.getString('user_profile'));
+      } else {
+        Toast.show({type: 'error', text1: 'Load error', text2: data.message});
+        return;
+      }
+    } catch (err) {
+      Toast.show({type: 'error', text1: 'Error', text2: err.message});
+    }
+  }
+
   const loadProfile = useCallback(() => {
     const raw = storage.getString('user_profile') || '{}';
     const p = JSON.parse(raw);
+    console.log('user_profile ->', p);
     setProfile(p);
     const init = Object.keys(p.socialMedia || {}).reduce((acc, key) => {
       acc[key] = false;
       return acc;
     }, {});
     setSelectedSM(init);
+    // ✅ check if user has valid subscription
+    const isActiveSubscription =
+      p?.activeSubscription?.remainingRequestLimit > 0;
+    setActiveSubscription(isActiveSubscription);
+    const isSubscriptionName =
+      p?.activeSubscription?.subscriptionName !== 'SILVER';
+    console.log('ActiveSubscription - ', isActiveSubscription); // not state, but actual value
+    console.log('ActiveSubscription - ', isSubscriptionName); // not state, but actual value
   }, []);
 
   const keyboardHeight = useKeyboardOffsetHeight();
@@ -76,14 +111,30 @@ export default function DatingScreen() {
   // pull-to-refresh
   const onRefresh = useCallback(() => {
     setRefreshing(true);
+    fetchData();
     loadProfile();
     formRef.current?.resetForm();
     setRefreshing(false);
   }, [loadProfile]);
 
-  const toggleSM = useCallback((key, checked) => {
-    setSelectedSM(prev => ({...prev, [key]: checked}));
-  }, []);
+  const toggleSM = useCallback(
+    (key, checked) => {
+      if (!subscriptionName) {
+        showAlert({
+          type: 'error',
+          title: 'Not have a valid subscription',
+          message: 'You don not have a premium subscription plan',
+          iconName: 'warning',
+          onConfirm: () => console.log('Confirmed'),
+          onCancel: () => console.log('Cancelled'),
+        });
+        return;
+      } else {
+        setSelectedSM(prev => ({...prev, [key]: checked}));
+      }
+    },
+    [subscriptionName, showAlert],
+  );
 
   const toggleBlind = () => setBlindDate(v => !v);
 
@@ -102,7 +153,19 @@ export default function DatingScreen() {
   });
 
   const onSubmit = useCallback(
-    values => {
+    (values, formikHelpers) => {
+      if (!activeSubscription) {
+        showAlert({
+          type: 'error',
+          title: 'Request failed',
+          message: 'You don not have a subscription plan',
+          iconName: 'warning',
+          onConfirm: () => console.log('Confirmed'),
+          onCancel: () => console.log('Cancelled'),
+        });
+        formikHelpers.setSubmitting(false);
+        return;
+      }
       const data = {
         ...values,
         meetupTime: values.meetupTime.toISOString(),
@@ -116,7 +179,7 @@ export default function DatingScreen() {
       });
       Alert.alert('Data', JSON.stringify(data, null, 2));
     },
-    [blindDate, selectedSM],
+    [showAlert, activeSubscription, blindDate, selectedSM],
   );
 
   return (
