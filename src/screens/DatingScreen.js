@@ -1,10 +1,11 @@
-/* eslint-disable no-unused-vars */
+/* eslint-disable curly */
 import React, {
   useState,
   useCallback,
   useContext,
   useEffect,
   useRef,
+  useMemo,
 } from 'react';
 import {
   View,
@@ -14,7 +15,6 @@ import {
   TouchableOpacity,
   RefreshControl,
   Platform,
-  KeyboardAvoidingView,
   Animated,
   TouchableWithoutFeedback,
   Keyboard,
@@ -24,77 +24,127 @@ import {Formik} from 'formik';
 import * as Yup from 'yup';
 import moment from 'moment';
 import Toast from 'react-native-toast-message';
+import {ActivityIndicator, Checkbox} from 'react-native-paper';
 
+// Contexts and Components
 import {ConnectivityContext} from '../contexts/ConnectivityContext';
 import {ThemeContext} from '../contexts/ThemeContext';
-import useKeyboardOffsetHeight from '../hooks/useKeyboardOffsetHeight';
 import BreakerText from '../components/ui/BreakerText';
 import HintButton from '../components/ui/HintButton';
 import RequestFields from '../components/ui/RequestFields';
 import SocialMediaLinker from '../components/ProfileScreen/SocialMediaLinker';
 import {moderateScale, verticalScale} from '../constants/metrics';
 import {storage} from '../contexts/storagesMMKV';
-import {Checkbox} from 'react-native-paper';
 import {useGlobalAlert} from '../contexts/GlobalAlertContext';
-import GlobalAlertBanner from '../components/Global/GlobalAlertBanner';
 import {APIsGet, endPoints} from '../APIs/apiService';
+import useKeyboardOffsetHeight from '../hooks/useKeyboardOffsetHeight';
 
 export default function DatingScreen() {
+  // Context Hooks
   const {isConnected} = useContext(ConnectivityContext);
   const {colors, fonts, fontSizes} = useContext(ThemeContext);
+  const {showAlert} = useGlobalAlert();
+
+  // Refs
   const formRef = useRef(null);
-  const [profile, setProfile] = useState({socialMedia: {}});
+  const slideAnim = useRef(new Animated.Value(0)).current;
+
+  // State Management
+  //const [profile, setProfile] = useState({socialMedia: {}});
+  const [profile, setProfile] = useState({});
   const [selectedSM, setSelectedSM] = useState({});
   const [blindDate, setBlindDate] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const {showAlert} = useGlobalAlert();
-  const [activeSubscription, setActiveSubscription] = useState(false);
-  const [subscriptionName, setSubscriptionName] = useState(false);
-  // load profile & initialize
 
-  async function fetchData() {
+  // Derived Values
+  const {hasValidSubscription, isNonSilver} = useMemo(() => {
+    const subscription = profile?.activeSubscription || {};
+    return {
+      hasValidSubscription: Number(subscription.remainingRequestLimit) > 0,
+      isNonSilver:
+        subscription.subscriptionName &&
+        subscription.subscriptionName !== 'SILVER',
+    };
+  }, [profile]);
+
+  // Profile Management
+  const loadProfile = useCallback(() => {
+    const rawProfile = storage.getString('user_profile') || '{}';
+    const parsedProfile = JSON.parse(rawProfile);
+
+    setProfile(parsedProfile);
+    setSelectedSM(
+      Object.keys(parsedProfile.socialMedia || {}).reduce(
+        (acc, key) => ({
+          ...acc,
+          [key]: false,
+        }),
+        {},
+      ),
+    );
+  }, []);
+
+  // Data Fetching
+  const fetchProfileData = useCallback(async () => {
     try {
-      //console.log('phoneNumber ', storage.getString('phoneNumber'));
       const {status, data} = await APIsGet(endPoints.checkPhone, {
         phoneNumber: storage.getString('phoneNumber'),
       });
-      //console.log('status', status, ' data -> ', data);
-      if (status === 200 && data.message === 'User Found' && data.bluValue) {
-        //setProfile(data.data);
-        storage.set('user_profile', JSON.stringify(data.data));
-        //console.log('user_profile -> ', storage.getString('user_profile'));
-      } else {
-        Toast.show({type: 'error', text1: 'Load error', text2: data.message});
-        return;
-      }
-    } catch (err) {
-      Toast.show({type: 'error', text1: 'Error', text2: err.message});
-    }
-  }
 
-  const loadProfile = useCallback(() => {
-    const raw = storage.getString('user_profile') || '{}';
-    const p = JSON.parse(raw);
-    console.log('user_profile ->', p);
-    setProfile(p);
-    const init = Object.keys(p.socialMedia || {}).reduce((acc, key) => {
-      acc[key] = false;
-      return acc;
-    }, {});
-    setSelectedSM(init);
-    // ✅ check if user has valid subscription
-    const isActiveSubscription =
-      p?.activeSubscription?.remainingRequestLimit > 0;
-    setActiveSubscription(isActiveSubscription);
-    const isSubscriptionName =
-      p?.activeSubscription?.subscriptionName !== 'SILVER';
-    console.log('ActiveSubscription - ', isActiveSubscription); // not state, but actual value
-    console.log('ActiveSubscription - ', isSubscriptionName); // not state, but actual value
+      if (status === 200 && data.message === 'User Found' && data.bluValue) {
+        storage.set('user_profile', JSON.stringify(data.data));
+        return true;
+      }
+      Toast.show({type: 'error', text1: 'Load error', text2: data.message});
+      return false;
+    } catch (error) {
+      Toast.show({type: 'error', text1: 'Error', text2: error.message});
+      return false;
+    }
   }, []);
 
-  const keyboardHeight = useKeyboardOffsetHeight();
+  // Storage Listener for Real-time Updates
+  useEffect(() => {
+    const unsubscribe = storage.addOnValueChangedListener(changedKey => {
+      if (changedKey === 'user_profile') loadProfile();
+    });
+    return () => unsubscribe.remove();
+  }, [loadProfile]);
 
-  const slideAnim = useRef(new Animated.Value(0)).current;
+  // Initial Load
+  useEffect(() => {
+    const initialize = async () => {
+      await fetchProfileData();
+      loadProfile();
+    };
+    initialize();
+  }, [fetchProfileData, loadProfile]);
+
+  // Keyboard Handling
+  // useEffect(() => {
+  //   const keyboardDidShow = Keyboard.addListener('keyboardDidShow', e => {
+  //     Animated.spring(slideAnim, {
+  //       toValue: -e.endCoordinates.height / 1.5,
+  //       useNativeDriver: true,
+  //       speed: 500,
+  //     }).start();
+  //   });
+
+  //   const keyboardDidHide = Keyboard.addListener('keyboardDidHide', () => {
+  //     Animated.spring(slideAnim, {
+  //       toValue: 0,
+  //       useNativeDriver: true,
+  //       speed: 500,
+  //     }).start();
+  //   });
+
+  //   return () => {
+  //     keyboardDidShow.remove();
+  //     keyboardDidHide.remove();
+  //   };
+  // }, [slideAnim]);
+
+  const keyboardHeight = useKeyboardOffsetHeight();
   useEffect(() => {
     // Slide up when keyboard shows
     Animated.timing(slideAnim, {
@@ -104,82 +154,78 @@ export default function DatingScreen() {
     }).start();
   }, [keyboardHeight, slideAnim]);
 
-  useEffect(() => {
-    loadProfile();
-  }, [loadProfile]);
+  // Refresh Control
+  const handleRefresh = useCallback(async () => {
+    try {
+      setRefreshing(true);
+      await fetchProfileData();
+      loadProfile();
+      formRef.current?.resetForm();
+    } finally {
+      setRefreshing(false);
+    }
+  }, [fetchProfileData, loadProfile]);
 
-  // pull-to-refresh
-  const onRefresh = useCallback(() => {
-    setRefreshing(true);
-    fetchData();
-    loadProfile();
-    formRef.current?.resetForm();
-    setRefreshing(false);
-  }, [loadProfile]);
-
-  const toggleSM = useCallback(
+  // Social Media Toggle
+  const handleSMtoggle = useCallback(
     (key, checked) => {
-      if (!subscriptionName) {
+      if (!isNonSilver) {
         showAlert({
           type: 'error',
-          title: 'Not have a valid subscription',
-          message: 'You don not have a premium subscription plan',
+          title: 'Subscription Required',
+          message: 'Premium subscription required for this feature',
           iconName: 'warning',
-          onConfirm: () => console.log('Confirmed'),
-          onCancel: () => console.log('Cancelled'),
         });
         return;
-      } else {
-        setSelectedSM(prev => ({...prev, [key]: checked}));
       }
+      setSelectedSM(prev => ({...prev, [key]: checked}));
     },
-    [subscriptionName, showAlert],
+    [isNonSilver, showAlert],
   );
 
-  const toggleBlind = () => setBlindDate(v => !v);
+  // Form Handling
+  const validationSchema = useMemo(
+    () =>
+      Yup.object().shape({
+        request: Yup.string().required('Request is required').trim(),
+        meetupArea: Yup.string().required('Meet-up area is required').trim(),
+        meetupTime: Yup.date()
+          .required('Time is required')
+          .min(new Date(), 'Cannot be in the past')
+          .max(moment().add(48, 'hours').toDate(), 'Max 48 h from now'),
+        termsAccepted: Yup.boolean().oneOf([true], 'You must accept terms'),
+      }),
+    [],
+  );
 
-  const now = new Date();
-  const minDate = now;
-  const maxDate = moment(now).add(48, 'hours').toDate();
-
-  const schema = Yup.object().shape({
-    request: Yup.string().required('Request is required').trim(),
-    meetupArea: Yup.string().required('Meet-up area is required').trim(),
-    meetupTime: Yup.date()
-      .required('Time is required')
-      .min(minDate, 'Cannot be in the past')
-      .max(maxDate, 'Max 48 h from now'),
-    termsAccepted: Yup.boolean().oneOf([true], 'You must accept terms'),
-  });
-
-  const onSubmit = useCallback(
-    (values, formikHelpers) => {
-      if (!activeSubscription) {
+  const handleSubmit = useCallback(
+    async (values, {setSubmitting}) => {
+      if (!hasValidSubscription) {
         showAlert({
           type: 'error',
-          title: 'Request failed',
-          message: 'You don not have a subscription plan',
+          title: 'Subscription Required',
+          message: 'Please upgrade your subscription plan',
           iconName: 'warning',
-          onConfirm: () => console.log('Confirmed'),
-          onCancel: () => console.log('Cancelled'),
         });
-        formikHelpers.setSubmitting(false);
+        setSubmitting(false);
         return;
       }
-      const data = {
+
+      const payload = {
         ...values,
         meetupTime: values.meetupTime.toISOString(),
         blindDate,
         socialPlatforms: Object.keys(selectedSM).filter(k => selectedSM[k]),
       };
+      Alert.alert('payload -> ', JSON.stringify(payload, null, 2));
       Toast.show({
         type: 'info',
-        text1: 'Submission',
-        text2: JSON.stringify(data, null, 2),
+        text1: 'Request Submitted',
+        text2: 'Your dating request has been processed',
       });
-      Alert.alert('Data', JSON.stringify(data, null, 2));
+      setSubmitting(false);
     },
-    [showAlert, activeSubscription, blindDate, selectedSM],
+    [hasValidSubscription, blindDate, selectedSM, showAlert],
   );
 
   return (
@@ -191,28 +237,31 @@ export default function DatingScreen() {
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
-            onRefresh={onRefresh}
+            onRefresh={handleRefresh}
             tintColor={colors.primary}
           />
         }>
         <Animated.View
           style={[styles.flex, {transform: [{translateY: slideAnim}]}]}>
+          {/* Header Section */}
           <Text
             style={[
               styles.pageTitle,
               {color: colors.text, fontFamily: fonts.bold},
             ]}>
-            Dating Page
+            Dating Preferences
           </Text>
 
+          {/* How It Works */}
           <TouchableOpacity
             onPress={() =>
               Toast.show({
                 type: 'info',
-                text1: 'How it works',
-                text2: 'Explain the dating process here.',
+                text1: 'Dating Process',
+                text2: 'Customize your dating preferences and connect!',
               })
-            }>
+            }
+            style={styles.infoButton}>
             <Text
               style={[
                 styles.howItWorks,
@@ -222,125 +271,109 @@ export default function DatingScreen() {
             </Text>
           </TouchableOpacity>
 
-          {/* Blind‑Date */}
-          <Text
-            style={[
-              styles.sectionTitle,
-              {color: colors.text, fontFamily: fonts.medium},
-            ]}>
-            Go with:
-          </Text>
-          <View style={styles.goWithOptions}>
-            <TouchableOpacity
-              activeOpacity={0.7}
-              onPress={toggleBlind}
+          {/* Date Type Selection */}
+          <View style={styles.selectionContainer}>
+            <Text
               style={[
-                styles.optionButton,
+                styles.sectionTitle,
+                {color: colors.text, fontFamily: fonts.medium},
+              ]}>
+              Date Type
+            </Text>
+
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setBlindDate(!blindDate)}
+              style={[
+                styles.optionCard,
                 {
-                  borderColor: colors.border,
                   backgroundColor: blindDate ? colors.lightSky : colors.surface,
+                  borderColor: colors.border,
                 },
               ]}>
-              <View style={styles.blindRow}>
+              <View style={styles.optionContent}>
                 <Checkbox
                   status={blindDate ? 'checked' : 'unchecked'}
-                  onPress={toggleBlind}
                   color={colors.primary}
                   uncheckedColor={colors.text}
                 />
                 <Text
-                  style={{
-                    color: blindDate ? colors.background : colors.text,
-                    fontFamily: fonts.regular,
-                    fontSize: fontSizes.medium,
-                  }}>
-                  Blind Date With Profile
+                  style={[
+                    styles.optionText,
+                    {color: blindDate ? colors.background : colors.text},
+                  ]}>
+                  Blind Date Experience
                 </Text>
               </View>
             </TouchableOpacity>
           </View>
 
-          <BreakerText
-            text="OR"
-            color={colors.border}
-            fontSize={fontSizes.medium}
-          />
-
-          {/* Social‑Media Checklist */}
+          {/* Social Media Connections */}
           <SocialMediaLinker
             value={profile.socialMedia}
-            titleText="Select your linked platforms"
-            screen="DatingScreen"
+            titleText="Connected Platforms"
             selected={selectedSM}
-            onToggle={toggleSM}
+            onToggle={handleSMtoggle}
+            disabled={!isNonSilver}
           />
 
-          <BreakerText
-            text="Your Request"
-            color={colors.border}
-            fontSize={fontSizes.medium}
-          />
-
+          {/* Dating Request Form */}
           <Formik
+            innerRef={formRef}
             initialValues={{
               request: '',
               meetupArea: '',
               meetupTime: null,
               termsAccepted: false,
             }}
-            innerRef={formRef}
-            validationSchema={schema}
-            onSubmit={onSubmit}>
-            {({handleSubmit, setFieldValue, errors, touched, resetForm}) => (
-              <>
+            validationSchema={validationSchema}
+            onSubmit={handleSubmit}>
+            {({handleSubmit, setFieldValue, isSubmitting}) => (
+              <View style={styles.formContainer}>
                 <RequestFields
-                  minDate={minDate}
-                  maxDate={maxDate}
-                  errors={errors}
-                  touched={touched}
+                  minDate={new Date()}
+                  maxDate={moment().add(48, 'hours').toDate()}
                   onChangeField={setFieldValue}
                 />
 
-                <BreakerText
-                  text="Request Hints:"
-                  color={colors.border}
-                  fontSize={fontSizes.small}
-                />
-                <View style={styles.hintsButtonsContainer}>
+                {/* Request Suggestions */}
+                <View style={styles.suggestionsContainer}>
                   {[
                     'Chai pe Chale !!!',
                     "Let's go on a walk.",
-                    "Hi, Let's have a Coffee...",
+                    "Hi, Let's ",
                     "Hi, Let's have a Dinner...",
-                  ].map((hint, i) => (
+                  ].map((hint, index) => (
                     <HintButton
-                      key={i}
+                      key={index}
                       text={hint}
                       onPress={() => setFieldValue('request', hint)}
                     />
                   ))}
                 </View>
 
+                {/* Submission Button */}
                 <TouchableOpacity
                   onPress={handleSubmit}
-                  disabled={!isConnected}
+                  disabled={!isConnected || isSubmitting}
                   style={[
-                    styles.sendRequestButton,
+                    styles.submitButton,
                     {
-                      backgroundColor: isConnected
-                        ? colors.primary
-                        : colors.disable,
+                      backgroundColor:
+                        isConnected && !isSubmitting
+                          ? colors.primary
+                          : colors.disable,
                     },
                   ]}>
-                  <Text
-                    style={[
-                      styles.sendRequestButtonText,
-                      {fontFamily: fonts.bold},
-                    ]}>
-                    Send Request
-                  </Text>
+                  {isSubmitting ? (
+                    <ActivityIndicator color="#FFF" />
+                  ) : (
+                    <Text style={[styles.buttonText, {fontFamily: fonts.bold}]}>
+                      {hasValidSubscription ? 'Send Request' : 'Upgrade Required'}
+                    </Text>
+                  )}
                 </TouchableOpacity>
-              </>
+              </View>
             )}
           </Formik>
         </Animated.View>
@@ -350,48 +383,66 @@ export default function DatingScreen() {
 }
 
 const styles = StyleSheet.create({
-  flex: {flex: 1},
-  container: {flex: 1, paddingHorizontal: moderateScale(16)},
-  contentContainer: {paddingVertical: verticalScale(20)},
+  flex: {flexGrow: 1},
+  container: {
+    flexGrow: 1,
+    paddingHorizontal: moderateScale(16),
+    //paddingVertical: verticalScale(0),
+  },
+  contentContainer: {paddingVertical: verticalScale(9)},
   pageTitle: {
-    fontSize: moderateScale(24),
+    fontSize: moderateScale(26),
     textAlign: 'center',
-    marginBottom: verticalScale(20),
+    marginBottom: verticalScale(15),
+  },
+  infoButton: {
+    alignSelf: 'center',
+    marginBottom: verticalScale(25),
   },
   howItWorks: {
     fontSize: moderateScale(16),
-    textAlign: 'center',
-    marginBottom: verticalScale(20),
     textDecorationLine: 'underline',
+  },
+  selectionContainer: {
+    marginBottom: verticalScale(25),
   },
   sectionTitle: {
     fontSize: moderateScale(18),
     textAlign: 'center',
-    marginVertical: verticalScale(10),
+    marginBottom: verticalScale(15),
   },
-  goWithOptions: {alignItems: 'center', marginBottom: verticalScale(10)},
-  optionButton: {
-    padding: moderateScale(2),
-    borderRadius: moderateScale(20),
-    borderWidth: StyleSheet.hairlineWidth,
-    width: '65%',
-    maxWidth: moderateScale(300),
+  optionCard: {
+    borderRadius: moderateScale(15),
+    borderWidth: 1,
+    padding: moderateScale(5),
+    marginHorizontal: moderateScale(10),
   },
-  hintsButtonsContainer: {
+  optionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  optionText: {
+    fontSize: moderateScale(16),
+    marginLeft: moderateScale(10),
+  },
+  formContainer: {
+    marginTop: verticalScale(20),
+  },
+  suggestionsContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    marginBottom: verticalScale(20),
-  },
-  sendRequestButton: {
-    paddingVertical: verticalScale(14),
-    borderRadius: moderateScale(10),
-    alignItems: 'center',
-    //marginBottom: verticalScale(20),
-  },
-  sendRequestButtonText: {fontSize: moderateScale(18), color: '#FFF'},
-  blindRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
+    gap: moderateScale(10),
+    marginVertical: verticalScale(20),
+  },
+  submitButton: {
+    borderRadius: moderateScale(10),
+    paddingVertical: verticalScale(15),
+    alignItems: 'center',
+    marginTop: verticalScale(10),
+  },
+  buttonText: {
+    fontSize: moderateScale(18),
+    color: '#FFF',
   },
 });

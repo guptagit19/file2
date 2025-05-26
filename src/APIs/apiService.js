@@ -1,7 +1,7 @@
 import axios from 'axios';
 import Toast from 'react-native-toast-message';
 
-export const API_BASE_URL = 'http://192.168.164.234:8080/users'; // no trailing slash
+export const API_BASE_URL = 'http://192.168.165.179:8080/users'; // no trailing slash
 
 export const endPoints = {
   generateOtp: '/otp/generateOtp',
